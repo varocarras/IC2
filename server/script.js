@@ -19,6 +19,8 @@
 
 window.addEventListener('load', () => {
 
+
+
 const config = {
   iceServers : [ {
     urls : 'stun:stun.l.google.com:19302', // change to your STUN server
@@ -27,7 +29,8 @@ const config = {
 
 const localId = "6969";
 
-const url = `ws://localhost:8000/${localId}`;
+const url = `ws://73.4.243.143:8000/6969`;
+
 
 const peerConnectionMap = {};
 const dataChannelMap = {};
