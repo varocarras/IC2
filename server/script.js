@@ -25,7 +25,7 @@ const config = {
   } ],
 };
 
-const localId = "6969;
+const localId = "6969";
 
 const url = `ws://localhost:8000/${localId}`;
 
