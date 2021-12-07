@@ -35,7 +35,7 @@ const config = {
   } ],
 };
 
-
+var connectedImplants = 0;
 
 const peerConnectionMap = {};
 const dataChannelMap = {};
@@ -151,8 +151,12 @@ function createPeerConnection(ws, id) {
 //Interpret Message
 function interpretMessage(message){
 
-  if (message.startsWith("register")){
-      
+  if (message.startsWith("check-in")){
+    implantId = message.split(' ')[1];
+    console.log('Implant checkin in');
+    var myTable = document.getElementById('mainT');
+    myTable.rows[1+connectedImplants].cells[0].innerHTML = implantId; 
+    myTable.rows[1+connectedImplants].cells[1].innerHTML = "ONLINE";
   }
   
 }
