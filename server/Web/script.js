@@ -17,19 +17,24 @@
  * along with this program; If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 window.addEventListener('load', () => {
 
 
 
+//C2 Server ID
+const localId = "6969";
+
+//Signaling server
+const url = `ws://73.4.243.143:8000/${localId}`;
+
+//Stun server configuration
 const config = {
   iceServers : [ {
-    urls : 'stun:stun.l.google.com:19302', // change to your STUN server
+    urls : 'stun:stun.l.google.com:19302',
   } ],
 };
 
-const localId = "6969";
-
-const url = `ws://73.4.243.143:8000/6969`;
 
 
 const peerConnectionMap = {};
@@ -40,7 +45,7 @@ const offerBtn = document.getElementById('offerBtn');
 const sendMsg = document.getElementById('sendMsg');
 const sendBtn = document.getElementById('sendBtn');
 const _localId = document.getElementById('localId');
-_localId.textContent = localId;
+//_localId.textContent = localId;
 
 console.log('Connecting to signaling...');
 openSignaling(url)
@@ -70,13 +75,14 @@ function openSignaling(url) {
         if (type != 'offer')
           return;
 
-        // Create PeerConnection for answer
+        // Create PeerConnection when received an offer
         console.log(`Answering to ${id}`);
         pc = createPeerConnection(ws, id);
       }
 
       switch (type) {
       case 'offer':
+
       case 'answer':
         pc.setRemoteDescription({
             sdp : message.description,
@@ -131,7 +137,7 @@ function createPeerConnection(ws, id) {
     console.log(`"DataChannel from ${id} received with label "${dc.label}"`);
     setupDataChannel(dc, id);
 
-    dc.send(`Hello from ${localId}`);
+    //dc.send(`Hello from ${localId}`);
 
     sendMsg.disabled = false;
     sendBtn.disabled = false;
@@ -140,6 +146,15 @@ function createPeerConnection(ws, id) {
 
   peerConnectionMap[id] = pc;
   return pc;
+}
+
+//Interpret Message
+function interpretMessage(message){
+
+  if (message.startsWith("register")){
+      
+  }
+  
 }
 
 // Setup a DataChannel
@@ -153,8 +168,12 @@ function setupDataChannel(dc, id) {
   };
   dc.onclose = () => { console.log(`DataChannel from ${id} closed`); };
   dc.onmessage = (e) => {
+    console.log('RECEIVED MESSAGE');
     if (typeof (e.data) != 'string')
       return;
+
+    //Consumes message
+    interpretMessage(e.data);
     console.log(`Message from ${id} received: ${e.data}`);
     document.body.appendChild(document.createTextNode(e.data));
   };
