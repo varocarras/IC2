@@ -348,15 +348,15 @@ int main(int argc, char **argv) try {
 
 	while (true) {
 
-
-		string id;
-		cout << "Press ENTER to Connect" << endl; //TODO - Remove this in the future
-		cin >> id;
-		cin.ignore();
-		if (id.empty())
-			break;
-		if (id == localId)
-			continue;
+		sleep(10); //Test
+		// string id;
+		// cout << "Press ENTER to Connect" << endl; //TODO - Remove this in the future
+		// cin >> id;
+		// cin.ignore();
+		// if (id.empty())
+		// 	break;
+		// if (id == localId)
+		// 	continue;
 
 		//Create Connection
 		auto pc = createPeerConnection(config, ws, c2id);
