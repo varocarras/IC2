@@ -2,6 +2,7 @@
 #include <ShlObj.h>
 #include <Windows.h>
 #include "helpers.h"
+#include <string>
 
 HRESULT CreateLink(LPCSTR lpszPathObj, LPCSTR lpszPathLink, LPCSTR lpszPath, LPCSTR lpszDesc)
 
@@ -47,4 +48,9 @@ HRESULT CreateLink(LPCSTR lpszPathObj, LPCSTR lpszPathLink, LPCSTR lpszPath, LPC
 	CoUninitialize();
 
 	return hres;
+}
+
+std::string getExePath() {
+	char result[MAX_PATH];
+	return std::string(result, GetModuleFileName(NULL, result, MAX_PATH));
 }

