@@ -74,7 +74,7 @@ function openSignaling(url) {
       if (!pc) {
         if (type != 'offer')
           return;
-
+        
         // Create PeerConnection when received an offer
         console.log(`Answering to ${id}`);
         pc = createPeerConnection(ws, id);
@@ -155,10 +155,10 @@ function interpretMessage(message){
     implantId = message.split(' ')[1];
     console.log('Implant checkin in');
     var myTable = document.getElementById('mainT');
-    myTable.rows[1+connectedImplants].cells[0].innerHTML = implantId; 
+    myTable.rows[1+connectedImplants].cells[0].innerHTML = implantId;
     myTable.rows[1+connectedImplants].cells[1].innerHTML = "ONLINE";
   }
-  
+
 }
 
 // Setup a DataChannel
