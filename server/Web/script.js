@@ -40,8 +40,8 @@ var connectedImplants = 0;
 const peerConnectionMap = {};
 const dataChannelMap = {};
 
-const offerId = document.getElementById('offerId');
-const offerBtn = document.getElementById('offerBtn');
+//const offerId = document.getElementById('offerId');
+//const offerBtn = document.getElementById('offerBtn');
 const sendMsg = document.getElementById('sendMsg');
 const sendBtn = document.getElementById('sendBtn');
 const _localId = document.getElementById('localId');
@@ -51,9 +51,9 @@ console.log('Connecting to signaling...');
 openSignaling(url)
     .then((ws) => {
       console.log('WebSocket connected, signaling ready');
-      offerId.disabled = false;
-      offerBtn.disabled = false;
-      offerBtn.onclick = () => offerPeerConnection(ws, offerId.value);
+      // offerId.disabled = false;
+      // offerBtn.disabled = false;
+      // offerBtn.onclick = () => offerPeerConnection(ws, offerId.value);
     })
     .catch((err) => console.error(err));
 
@@ -150,14 +150,23 @@ function createPeerConnection(ws, id) {
 
 //Interpret Message
 function interpretMessage(message){
+  
 
   if (message.startsWith("check-in")){
     implantId = message.split(' ')[1];
     console.log('Implant checkin in');
-    var myTable = document.getElementById('mainT');
-    myTable.rows[1+connectedImplants].cells[0].innerHTML = implantId; 
-    myTable.rows[1+connectedImplants].cells[1].innerHTML = "ONLINE";
+    tableCreate(implantId);
+    // var myTable = document.getElementById('mainT');
+    // var entry = document.createElement('tr');
+    // entry.appendChild(document.createTextNode(implantId));
+    // myTable.rows[1+connectedImplants].cells[0].innerHTML = implantId; 
+    // myTable.rows[1+connectedImplants].cells[1].innerHTML = "ONLINE";
+    // myTable.rows[1+connectedImplants].cells[2].innerHTML = "<button type='button' onclick='updateTextArea(" + '"' + + element.id + '"' + ")' >Add</button><br>";
   }
+  var list = document.getElementById('messageTable');
+  var entry = document.createElement('li');
+  entry.appendChild(document.createTextNode(message));
+  list.appendChild(entry);
   
 }
 
@@ -179,7 +188,7 @@ function setupDataChannel(dc, id) {
     //Consumes message
     interpretMessage(e.data);
     console.log(`Message from ${id} received: ${e.data}`);
-    document.body.appendChild(document.createTextNode(e.data));
+    //document.body.appendChild(document.createTextNode(e.data));
   };
 
   dataChannelMap[id] = dc;
@@ -217,3 +226,62 @@ function randomId(length) {
 }
 
 });
+
+//Helper function to create table with implants
+function tableCreate(implantId) {
+  const body = document.body;
+  const tbl = document.createElement('table');
+  tbl.style.width = '100px';
+  tbl.style.border = '2px solid black';
+
+  for (let i = 0; i < 3; i++) {
+    const tr = tbl.insertRow();
+    for (let j = 0; j < 2; j++) {
+      if (i === 2 && j === 1) {
+        break;
+
+      } else if(i == 0 && j == 0) {
+        const td = tr.insertCell();
+        td.appendChild(document.createTextNode(`   ${implantId}`));
+        td.style.border = '2px solid black';
+
+      }else if(i == 0 && j == 1) {
+        const td = tr.insertCell();
+        td.appendChild(document.createTextNode(`ONLINE`));
+        td.style.border = '2px solid black';
+
+      }else if(i == 1 && j == 0) {
+        const td = tr.insertCell();
+        var btn = document.createElement("BUTTON");
+        btn.innerHTML = "CMD-ONE";
+        btn.style.color = 'green';
+        btn.style.backgroundColor = 'black';
+
+        td.appendChild(btn); 
+        //td.appendChild(document.createTextNode(`+ Info`));
+        td.style.border = '2px solid black';
+
+      }else if(i == 2 && j == 0) {
+        const td = tr.insertCell();
+        var btn = document.createElement("BUTTON");
+        btn.innerHTML = "CMD-TWO";
+        btn.style.color = 'red';
+        btn.style.backgroundColor = 'black';
+        td.appendChild(btn); 
+        //td.appendChild(document.createTextNode(`+ Info`));
+        td.style.border = '2px solid black';
+
+
+      } else {
+        const td = tr.insertCell();
+        td.appendChild(document.createTextNode(`Additional Information`));
+        td.style.border = '2px solid black';
+        if (i === 1 && j === 1) {
+          td.setAttribute('rowSpan', '2');
+        }
+      }
+    }
+  }
+  body.appendChild(tbl);
+}
+

@@ -8,28 +8,19 @@
     </head>
     <body>
         <h1 style="text-align:center">C2 CP</h1>
-        <table class="tb" id="mainT">
-            <tr>
-              <th style="width:70%">Implant ID</th>
-              <th>STATUS</th> 
-            </tr>
-            <tr>
-              <td style="width:70%"></td>
-              <td></td> 
-            </tr>
-            <tr>
-              <td style="width:70%"></td>
-              <td></td> 
-            </tr>
-          </table>
-        
-        <h2>Send an offer through signaling</h2>
-		<input type="text" id="offerId" placeholder="remote ID" disabled>
-		<input type="button" id="offerBtn" value="Offer" disabled>
-		<br>
-        <h2>Send a message through DataChannel</h2>
-        <input type="text" id="sendMsg" placeholder="message" disabled>
-        <input type="button" id="sendBtn" value="Send" disabled>
+        <table class="tb" id="mainT"></table>
+        <br>
         <br>
     </body>
+<!-- <h2>Send an offer through signaling</h2>
+    <input type="text" id="offerId" placeholder="remote ID" disabled>
+    <input type="button" id="offerBtn" value="Offer" disabled> -->
+    <br>
+    <h2>Command Line</h2>
+    <input type="text" id="sendMsg" placeholder="message" disabled>
+    <input type="button" id="sendBtn" value="Send" disabled>
+    <br>
+    <ol id="messageTable"></ol>
+    <br>
+    <br>
 </html>
