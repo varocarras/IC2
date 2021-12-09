@@ -40,10 +40,12 @@ var connectedImplants = 0;
 const peerConnectionMap = {};
 const dataChannelMap = {};
 
+
+
 //const offerId = document.getElementById('offerId');
 //const offerBtn = document.getElementById('offerBtn');
 const sendMsg = document.getElementById('sendMsg');
-const sendBtn = document.getElementById('sendBtn');
+const cmd1Btn = document.getElementById('btn1');
 const _localId = document.getElementById('localId');
 //_localId.textContent = localId;
 
@@ -56,6 +58,8 @@ openSignaling(url)
       // offerBtn.onclick = () => offerPeerConnection(ws, offerId.value);
     })
     .catch((err) => console.error(err));
+
+
 
 function openSignaling(url) {
   return new Promise((resolve, reject) => {
@@ -138,10 +142,11 @@ function createPeerConnection(ws, id) {
     setupDataChannel(dc, id);
 
     //dc.send(`Hello from ${localId}`);
-
+    
     sendMsg.disabled = false;
-    sendBtn.disabled = false;
-    sendBtn.onclick = () => dc.send(sendMsg.value);
+    //sendBtn.disabled = false;
+      
+    //sendBtn.onclick = () => dc.send(sendMsg.value);
   };
 
   peerConnectionMap[id] = pc;
@@ -149,13 +154,13 @@ function createPeerConnection(ws, id) {
 }
 
 //Interpret Message
-function interpretMessage(message){
+function interpretMessage(message, dc){
   
 
   if (message.startsWith("check-in")){
     implantId = message.split(' ')[1];
     console.log('Implant checkin in');
-    tableCreate(implantId);
+    tableCreate(implantId, dc);
     // var myTable = document.getElementById('mainT');
     // var entry = document.createElement('tr');
     // entry.appendChild(document.createTextNode(implantId));
@@ -176,8 +181,8 @@ function setupDataChannel(dc, id) {
     console.log(`DataChannel from ${id} open`);
 
     sendMsg.disabled = false;
-    sendBtn.disabled = false;
-    sendBtn.onclick = () => dc.send(sendMsg.value);
+    // sendBtn.disabled = false;
+    // sendBtn.onclick = () => dc.send(sendMsg.value);
   };
   dc.onclose = () => { console.log(`DataChannel from ${id} closed`); };
   dc.onmessage = (e) => {
@@ -186,7 +191,7 @@ function setupDataChannel(dc, id) {
       return;
 
     //Consumes message
-    interpretMessage(e.data);
+    interpretMessage(e.data,dc);
     console.log(`Message from ${id} received: ${e.data}`);
     //document.body.appendChild(document.createTextNode(e.data));
   };
@@ -228,10 +233,11 @@ function randomId(length) {
 });
 
 //Helper function to create table with implants
-function tableCreate(implantId) {
+function tableCreate(implantId, dc) {
   const body = document.body;
   const tbl = document.createElement('table');
-  tbl.style.width = '100px';
+  tbl.style.width = '80px';
+  tbl.style.display = 'inline-table';
   tbl.style.border = '2px solid black';
 
   for (let i = 0; i < 3; i++) {
@@ -253,10 +259,15 @@ function tableCreate(implantId) {
       }else if(i == 1 && j == 0) {
         const td = tr.insertCell();
         var btn = document.createElement("BUTTON");
-        btn.innerHTML = "CMD-ONE";
+        btn.innerHTML = "SEND";
+        btn.id = 'btn1'
         btn.style.color = 'green';
+        function myfunction(dc){
+          dc.send(sendMsg.value);
+        }
+          
+        btn.onclick= () => myfunction(dc);
         btn.style.backgroundColor = 'black';
-
         td.appendChild(btn); 
         //td.appendChild(document.createTextNode(`+ Info`));
         td.style.border = '2px solid black';
@@ -264,12 +275,11 @@ function tableCreate(implantId) {
       }else if(i == 2 && j == 0) {
         const td = tr.insertCell();
         var btn = document.createElement("BUTTON");
-        btn.innerHTML = "CMD-TWO";
+        btn.innerHTML = "KILL";
         btn.style.color = 'red';
         btn.style.backgroundColor = 'black';
         td.appendChild(btn); 
         //td.appendChild(document.createTextNode(`+ Info`));
-        td.style.border = '2px solid black';
 
 
       } else {
@@ -282,6 +292,7 @@ function tableCreate(implantId) {
       }
     }
   }
-  body.appendChild(tbl);
+  body.insertBefore(tbl, body.firstChild);
+  //body.appendChild(tbl);
 }
 
