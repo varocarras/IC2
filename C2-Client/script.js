@@ -47,16 +47,23 @@ const sendMsg = document.getElementById('sendMsg');
 const cmd1Btn = document.getElementById('btn1');
 const _localId = document.getElementById('localId');
 //_localId.textContent = localId;
-tableCreate("11232","wdaadw");
-tableCreate("11232","wdaadw");
+// tableCreate("1122","wdaadw");
+// tableCreate("1123","wdaadw");
+
+function addToLog(id,message) {
+  const a = document.getElementById("log-" + id);
+  var d = document.createElement("DIV");
+  d.appendChild(document.createTextNode(message));
+  a.appendChild(d);
+}
+  
+
 
 console.log('Connecting to signaling...');
 openSignaling(url)
     .then((ws) => {
       console.log('WebSocket connected, signaling ready');
-      // offerId.disabled = false;
-      // offerBtn.disabled = false;
-      // offerBtn.onclick = () => offerPeerConnection(ws, offerId.value);
+      //Ready to signal
     })
     .catch((err) => console.error(err));
 
@@ -162,17 +169,13 @@ function interpretMessage(message, dc){
     implantId = message.split(' ')[1];
     console.log('Implant checkin in');
     tableCreate(implantId, dc);
-    // var myTable = document.getElementById('mainT');
-    // var entry = document.createElement('tr');
-    // entry.appendChild(document.createTextNode(implantId));
-    // myTable.rows[1+connectedImplants].cells[0].innerHTML = implantId; 
-    // myTable.rows[1+connectedImplants].cells[1].innerHTML = "ONLINE";
-    // myTable.rows[1+connectedImplants].cells[2].innerHTML = "<button type='button' onclick='updateTextArea(" + '"' + + element.id + '"' + ")' >Add</button><br>";
   }
-  var list = document.getElementById('messageTable');
-  var entry = document.createElement('li');
-  entry.appendChild(document.createTextNode(message));
-  list.appendChild(entry);
+
+  addToLog(implantId,message); //Test
+  // var list = document.getElementById('messageTable');
+  // var entry = document.createElement('li');
+  // entry.appendChild(document.createTextNode(message));
+  // list.appendChild(entry);
   
 }
 
@@ -249,7 +252,7 @@ function tableCreate(implantId, dc) {
 
       if(i == 0 && j == 0) {
         const td = tr.insertCell();
-        td.appendChild(document.createTextNode(`ONLN`));
+        td.appendChild(document.createTextNode(`ON`));
         td.style.backgroundColor = 'green';
         //td.appendChild(document.createTextNode(`   ${implantId}`));
         td.style.border = '2px solid black';
@@ -260,12 +263,13 @@ function tableCreate(implantId, dc) {
 
         //td.appendChild(document.createTextNode(`ONLINE`));
         td.style.border = '2px solid black';
+        td.style.backgroundColor = 'Gainsboro';
 
       }else if(i == 1 && j == 0) {
         const td = tr.insertCell();
         var btn = document.createElement("BUTTON");
         btn.innerHTML = "C0PY";
-        btn.style.color = 'white';
+        btn.style.color = 'gray';
         btn.style.backgroundColor = 'blue';
         function myfunction(dc){
           dc.send("copy");
@@ -273,12 +277,14 @@ function tableCreate(implantId, dc) {
         btn.onclick = () => myfunction(dc);
         td.appendChild(btn);
         td.style.border = '2px solid black';
+        td.style.backgroundColor = 'Gainsboro';
+
 
       }else if(i == 2 && j == 0) {
         const td = tr.insertCell();
         var btn = document.createElement("BUTTON");
         btn.innerHTML = "K1LL";
-        btn.style.color = 'white';
+        btn.style.color = 'gray';
         btn.style.backgroundColor = 'red';
         function myfunction(dc){
           dc.send("kill");
@@ -288,14 +294,21 @@ function tableCreate(implantId, dc) {
         btn.onclick = () => myfunction();
         td.appendChild(btn);
         td.style.border = '2px solid black';
+        td.style.backgroundColor = 'Gainsboro';
+
  
         //td.appendChild(document.createTextNode(`+ Info`));
         
 
       } else if (i == 1 && j == 1) {
-        const td = tr.insertCell();
-        td.appendChild(document.createTextNode(`Additional Information`));
+        var td = tr.insertCell();
+        td.id = 'log-' + implantId;
+        var div = document.createElement('DIV');
+        div.appendChild(document.createTextNode('hey'));
+        td.appendChild(div);
+        //td.appendChild(document.createTextNode(`This is an example of a pretty big log That maybe contain or not some breaks and it can definitely fill it up`));
         td.style.border = '2px solid black';
+        td.style.backgroundColor = 'Gainsboro'
         if (i === 1 && j === 1) {
           td.setAttribute('rowSpan', '4');
         }
@@ -305,59 +318,52 @@ function tableCreate(implantId, dc) {
         var btn = document.createElement("BUTTON");
         btn.innerHTML = "SEND";
         btn.id = 'btn1'
-        btn.style.color = 'white';
+        btn.style.color = 'gray';
         function myfunction(dc){
           dc.send(tbl.getElementsByClassName("input-" + implantId));
         }
           
         btn.onclick = () => myfunction(dc);
-        btn.style.backgroundColor = 'green';
+        btn.style.backgroundColor = 'springgreen';
         td.appendChild(btn); 
         td.style.border = '2px solid black';
+        td.style.backgroundColor = 'Gainsboro';
       
       } else if (i == 5 && j == 1){
         const td = tr.insertCell();
+        td.style.backgroundColor = 'springgreen';
         //td.appendChild(document.createTextNode(`Additional Information`));
         var input = document.createElement("input");
+        input.placeholder = 'Type any command here'
         input.className = "input-" + implantId;
         td.appendChild(input);
         td.style.border = '2px solid black';
         td.colSpan = '2';
-      } else if(i == 0 && j == 2){
-        const td = tr.insertCell();
-        var btn = document.createElement("BUTTON");
-        btn.innerHTML = "STOP";
-        btn.id = 'btnStop'
-        btn.style.color = 'white';
-        function myfunction(dc){
-          dc.send(tbl.getElementsByClassName("input-" + implantId));
-        }
-          
-        btn.onclick = () => myfunction(dc);
-        btn.style.backgroundColor = 'grey';
-        td.appendChild(btn); 
-        td.style.border = '2px solid black';
+        
+
       }else if(i == 4 && j == 0){
         const td = tr.insertCell();
         var btn = document.createElement("BUTTON");
         btn.innerHTML = "RASM";
         btn.id = 'btnRansom'
-        btn.style.color = 'white';
-        function myfunction(dc){
-          dc.send(tbl.getElementsByClassName("input-" + implantId));
-        }
-          
-        btn.onclick = () => myfunction(dc);
+        btn.style.color = 'gray';
+
+
         btn.style.backgroundColor = 'darkmagenta';
         td.appendChild(btn); 
         td.style.border = '2px solid black';
+        td.style.backgroundColor = 'Gainsboro';
+
+          //test
+        
+
 
       }else if(i == 3 && j == 0){
         const td = tr.insertCell();
         var btn = document.createElement("BUTTON");
         btn.innerHTML = "DROP";
         btn.id = 'btnDrop'
-        btn.style.color = 'white';
+        btn.style.color = 'gray';
         function myfunction(dc){
           dc.send(tbl.getElementsByClassName("input-" + implantId));
         }
@@ -366,6 +372,8 @@ function tableCreate(implantId, dc) {
         btn.style.backgroundColor = 'cyan';
         td.appendChild(btn); 
         td.style.border = '2px solid black';
+        td.style.backgroundColor = 'Gainsboro';
+
 
       }
 
@@ -375,7 +383,7 @@ function tableCreate(implantId, dc) {
   tbl.style = 'a';
   tbl.classList.add('a');
   tbl.style.border = '2px solid black';
-
   body.prepend(tbl, document.body.firstElementChild);
-}
 
+
+}

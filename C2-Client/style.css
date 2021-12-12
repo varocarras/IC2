@@ -17,10 +17,18 @@ input[type="text"] {
 	max-width: 75%;
 	padding: 0.4em;
 }
+
+td {
+	text-align: center;
+	font-weight: bold;
+	vertical-align: middle;
+	vertical-align: top;
+	word-wrap: break-word;         /* All browsers since IE 5.5+ */
+	overflow: hidden; 
+}
 table.a {
 	table-layout: auto;
 	width: 300px;
 	display: inline-table;
-	padding-right:  10px;
 	margin: 0 25px;
 }
