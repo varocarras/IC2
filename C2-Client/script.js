@@ -41,13 +41,14 @@ const peerConnectionMap = {};
 const dataChannelMap = {};
 
 
-
 //const offerId = document.getElementById('offerId');
 //const offerBtn = document.getElementById('offerBtn');
 const sendMsg = document.getElementById('sendMsg');
 const cmd1Btn = document.getElementById('btn1');
 const _localId = document.getElementById('localId');
 //_localId.textContent = localId;
+tableCreate("11232","wdaadw");
+tableCreate("11232","wdaadw");
 
 console.log('Connecting to signaling...');
 openSignaling(url)
@@ -236,63 +237,145 @@ function randomId(length) {
 function tableCreate(implantId, dc) {
   const body = document.body;
   const tbl = document.createElement('table');
-  tbl.style.width = '80px';
-  tbl.style.display = 'inline-table';
-  tbl.style.border = '2px solid black';
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 6; i++) {
     const tr = tbl.insertRow();
-    for (let j = 0; j < 2; j++) {
-      if (i === 2 && j === 1) {
-        break;
+    tr.className = "tr-" + implantId;
 
-      } else if(i == 0 && j == 0) {
+    for (let j = 0; j < 2; j++) {
+      
+      // if (i === 2 && j === 1) {
+      //   break;
+
+      if(i == 0 && j == 0) {
         const td = tr.insertCell();
-        td.appendChild(document.createTextNode(`   ${implantId}`));
+        td.appendChild(document.createTextNode(`ONLN`));
+        td.style.backgroundColor = 'green';
+        //td.appendChild(document.createTextNode(`   ${implantId}`));
         td.style.border = '2px solid black';
 
       }else if(i == 0 && j == 1) {
         const td = tr.insertCell();
-        td.appendChild(document.createTextNode(`ONLINE`));
+        td.appendChild(document.createTextNode(`   ${implantId}`));
+
+        //td.appendChild(document.createTextNode(`ONLINE`));
         td.style.border = '2px solid black';
 
       }else if(i == 1 && j == 0) {
         const td = tr.insertCell();
         var btn = document.createElement("BUTTON");
-        btn.innerHTML = "SEND";
-        btn.id = 'btn1'
-        btn.style.color = 'green';
+        btn.innerHTML = "C0PY";
+        btn.style.color = 'white';
+        btn.style.backgroundColor = 'blue';
         function myfunction(dc){
-          dc.send(sendMsg.value);
+          dc.send("copy");
         }
-          
-        btn.onclick= () => myfunction(dc);
-        btn.style.backgroundColor = 'black';
-        td.appendChild(btn); 
-        //td.appendChild(document.createTextNode(`+ Info`));
+        btn.onclick = () => myfunction(dc);
+        td.appendChild(btn);
         td.style.border = '2px solid black';
 
       }else if(i == 2 && j == 0) {
         const td = tr.insertCell();
         var btn = document.createElement("BUTTON");
-        btn.innerHTML = "KILL";
-        btn.style.color = 'red';
-        btn.style.backgroundColor = 'black';
-        td.appendChild(btn); 
+        btn.innerHTML = "K1LL";
+        btn.style.color = 'white';
+        btn.style.backgroundColor = 'red';
+        function myfunction(dc){
+          dc.send("kill");
+        }
+        
+        //btn.onclick = () => myfunction(dc);
+        btn.onclick = () => myfunction();
+        td.appendChild(btn);
+        td.style.border = '2px solid black';
+ 
         //td.appendChild(document.createTextNode(`+ Info`));
+        
 
-
-      } else {
+      } else if (i == 1 && j == 1) {
         const td = tr.insertCell();
         td.appendChild(document.createTextNode(`Additional Information`));
         td.style.border = '2px solid black';
         if (i === 1 && j === 1) {
-          td.setAttribute('rowSpan', '2');
+          td.setAttribute('rowSpan', '4');
         }
+      } else if(i == 5 && j == 0){
+
+        const td = tr.insertCell();
+        var btn = document.createElement("BUTTON");
+        btn.innerHTML = "SEND";
+        btn.id = 'btn1'
+        btn.style.color = 'white';
+        function myfunction(dc){
+          dc.send(tbl.getElementsByClassName("input-" + implantId));
+        }
+          
+        btn.onclick = () => myfunction(dc);
+        btn.style.backgroundColor = 'green';
+        td.appendChild(btn); 
+        td.style.border = '2px solid black';
+      
+      } else if (i == 5 && j == 1){
+        const td = tr.insertCell();
+        //td.appendChild(document.createTextNode(`Additional Information`));
+        var input = document.createElement("input");
+        input.className = "input-" + implantId;
+        td.appendChild(input);
+        td.style.border = '2px solid black';
+        td.colSpan = '2';
+      } else if(i == 0 && j == 2){
+        const td = tr.insertCell();
+        var btn = document.createElement("BUTTON");
+        btn.innerHTML = "STOP";
+        btn.id = 'btnStop'
+        btn.style.color = 'white';
+        function myfunction(dc){
+          dc.send(tbl.getElementsByClassName("input-" + implantId));
+        }
+          
+        btn.onclick = () => myfunction(dc);
+        btn.style.backgroundColor = 'grey';
+        td.appendChild(btn); 
+        td.style.border = '2px solid black';
+      }else if(i == 4 && j == 0){
+        const td = tr.insertCell();
+        var btn = document.createElement("BUTTON");
+        btn.innerHTML = "RASM";
+        btn.id = 'btnRansom'
+        btn.style.color = 'white';
+        function myfunction(dc){
+          dc.send(tbl.getElementsByClassName("input-" + implantId));
+        }
+          
+        btn.onclick = () => myfunction(dc);
+        btn.style.backgroundColor = 'darkmagenta';
+        td.appendChild(btn); 
+        td.style.border = '2px solid black';
+
+      }else if(i == 3 && j == 0){
+        const td = tr.insertCell();
+        var btn = document.createElement("BUTTON");
+        btn.innerHTML = "DROP";
+        btn.id = 'btnDrop'
+        btn.style.color = 'white';
+        function myfunction(dc){
+          dc.send(tbl.getElementsByClassName("input-" + implantId));
+        }
+          
+        btn.onclick = () => myfunction(dc);
+        btn.style.backgroundColor = 'cyan';
+        td.appendChild(btn); 
+        td.style.border = '2px solid black';
+
       }
+
     }
   }
-  body.insertBefore(tbl, body.firstChild);
-  //body.appendChild(tbl);
+  //tbl.className = "styled-table";
+  tbl.style = 'a';
+  tbl.classList.add('a');
+  tbl.style.border = '2px solid black';
+
+  body.prepend(tbl, document.body.firstElementChild);
 }
 
