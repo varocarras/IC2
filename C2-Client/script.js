@@ -43,8 +43,6 @@ const dataChannelMap = {};
 
 //const offerId = document.getElementById('offerId');
 //const offerBtn = document.getElementById('offerBtn');
-const sendMsg = document.getElementById('sendMsg');
-const cmd1Btn = document.getElementById('btn1');
 const _localId = document.getElementById('localId');
 //_localId.textContent = localId;
 // tableCreate("1122","wdaadw");
@@ -149,12 +147,6 @@ function createPeerConnection(ws, id) {
     console.log(`"DataChannel from ${id} received with label "${dc.label}"`);
     setupDataChannel(dc, id);
 
-    //dc.send(`Hello from ${localId}`);
-    
-    sendMsg.disabled = false;
-    //sendBtn.disabled = false;
-      
-    //sendBtn.onclick = () => dc.send(sendMsg.value);
   };
 
   peerConnectionMap[id] = pc;
@@ -172,10 +164,6 @@ function interpretMessage(message, dc){
   }
 
   addToLog(implantId,message); //Test
-  // var list = document.getElementById('messageTable');
-  // var entry = document.createElement('li');
-  // entry.appendChild(document.createTextNode(message));
-  // list.appendChild(entry);
   
 }
 
@@ -184,9 +172,6 @@ function setupDataChannel(dc, id) {
   dc.onopen = () => {
     console.log(`DataChannel from ${id} open`);
 
-    sendMsg.disabled = false;
-    // sendBtn.disabled = false;
-    // sendBtn.onclick = () => dc.send(sendMsg.value);
   };
   dc.onclose = () => { console.log(`DataChannel from ${id} closed`); };
   dc.onmessage = (e) => {
