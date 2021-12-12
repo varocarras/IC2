@@ -1,13 +1,25 @@
 #include <string>
 #include <Windows.h>
 #include <random>
-
 #include <fstream>
 #include <Shlobj.h>
-
+#include <filesystem>
 
 using namespace std;
 
+    /***
+* copyRecursive | Recursively tries to copy a path and its subfolders and files and ignores
+ * errors
+***/
+void copyRecursive(const std::filesystem::path &src, const std::filesystem::path &target) noexcept {
+	try {
+		std::filesystem::copy(src, target,
+		                      std::filesystem::copy_options::overwrite_existing |
+		                     std::filesystem::copy_options::recursive);
+	} catch (std::exception &e) {
+		//Maybe do something
+	}
+}
 // Helper function to generate a random ID thanks libchanneldata
 string randomId(size_t length) {
 	static const string characters(
