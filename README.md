@@ -1,5 +1,4 @@
 # IC2 - P2P RTC Penetration Testing Framework
-### By Alvaro Carrascosa & Aidan Gomez
 
 ## Introduction
  - This framework helps penetration testing by creating a unique payload that communicates to the client directly through RTC.
