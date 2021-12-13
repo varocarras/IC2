@@ -2,7 +2,7 @@
 
 ## Introduction
  - This framework helps penetration testing by creating a unique payload that communicates to the client directly through RTC.
- - The client is a website that runs on localhost, that once connected to it, will start connecting to implants.
+ - The client is a website that runs on localhost, once connected to it, it will start communicating with implants.
  - Since the communication protocol is RTC, the Client/C2 can be deployed on any public network without the need to port forward.
 
 ## Functionality
