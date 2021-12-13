@@ -1,15 +1,12 @@
-# IC2 - Penetration Testing Framework
-## P2P RTC Implant-C2 communication protocol
-## ------------------------------------
-
+# IC2 - P2P RTC Penetration Testing Framework
 ### By Alvaro Carrascosa & Aidan Gomez
 
-### Introduction
+## Introduction
  - This framework helps penetration testing by creating a unique payload that communicates to the client directly through RTC.
  - The client is a website that runs on localhost, that once connected to it, will start connecting to implants.
  - Since the communication protocol is RTC, the Client/C2 can be deployed on any public network without the need to port forward.
 
-### Functionality
+## Functionality
  - Once executed, the payload will attempt to create persistence on the machine and setup a working directory, it then will then initiate the connection to the client.
 
  - The implant includes the following functionality:
@@ -29,14 +26,14 @@
 
 
 
-### Presentation
+## Presentation
  - You can find the presentation [here](https://docs.google.com/presentation/d/172e0TQYKG9e2lxGtp5YXmFnBki4YkVWDc0HZuaKSB7s/edit#slide=id.p)
-### Demo video
+## Demo video
  - Demo Malware.mp4
-### Diagrams
+## Diagrams
 ![first](https://user-images.githubusercontent.com/44831139/145478465-a4a7976a-c445-465e-b2aa-34952987cb03.jpg)
 ![second](https://user-images.githubusercontent.com/44831139/145478485-77f89ad6-b8a0-4456-93b4-dd6f7525e5ff.jpg)
-### Collaboration
+## Collaboration
  - Alvaro : Worked mostly on implant
  - Aidan : Worked mostly on C2/client
 
