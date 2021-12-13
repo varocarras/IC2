@@ -54,8 +54,6 @@ function addToLog(id,message) {
   d.appendChild(document.createTextNode(message));
   a.appendChild(d);
 }
-  
-
 
 console.log('Connecting to signaling...');
 openSignaling(url)
@@ -288,9 +286,6 @@ function tableCreate(implantId, dc) {
       } else if (i == 1 && j == 1) {
         var td = tr.insertCell();
         td.id = 'log-' + implantId;
-        var div = document.createElement('DIV');
-        div.appendChild(document.createTextNode('hey'));
-        td.appendChild(div);
         //td.appendChild(document.createTextNode(`This is an example of a pretty big log That maybe contain or not some breaks and it can definitely fill it up`));
         td.style.border = '2px solid black';
         td.style.backgroundColor = 'Gainsboro'
