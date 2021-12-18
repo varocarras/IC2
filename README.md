@@ -22,8 +22,8 @@
     | Individual implant control panel
     | Host scripts in base64 string
 
-
-
+## Sources
+ - Chromium-Stealer - [SaulBerrenson/BrowserStealer](https://github.com/SaulBerrenson/BrowserStealer?ref=bestofcpp.com)
 
 ## Presentation
  - You can find the presentation [here](https://docs.google.com/presentation/d/172e0TQYKG9e2lxGtp5YXmFnBki4YkVWDc0HZuaKSB7s/edit#slide=id.p)
