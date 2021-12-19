@@ -45,8 +45,7 @@ const dataChannelMap = {};
 //const offerBtn = document.getElementById('offerBtn');
 const _localId = document.getElementById('localId');
 //_localId.textContent = localId;
-// tableCreate("1122","wdaadw");
-// tableCreate("1123","wdaadw");
+
 
 function addToLog(id,message) {
   const a = document.getElementById("log-" + id);
@@ -157,12 +156,11 @@ function interpretMessage(message, dc){
 
   if (message.startsWith("check-in")){
     implantId = message.split(' ')[1];
-    console.log('Implant checkin in');
+    console.log('Implant checkin in...');
     tableCreate(implantId, dc);
   }
 
-  addToLog(implantId,message); //Test
-  
+  addToLog(implantId,message); //Test  
 }
 
 // Setup a DataChannel
