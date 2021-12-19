@@ -1,9 +1,10 @@
 # IC2 - P2P RTC Penetration Testing Framework
 
 ## Introduction
- - This framework helps penetration testing by creating a unique payload that communicates to the client directly through RTC.
+ - This framework provides the ability to create a unique payload that communicates to the client directly through RTC.
  - The client is a website that runs on localhost, once connected to it, it will start communicating with implants.
  - Since the communication protocol is RTC, the Client/C2 can be deployed on any public network without the need to port forward.
+ - While the Client/C2 is down, the Implants will communicate with each other to exchange their data and get their assigned tasks.
 
 ## Functionality
  - Once executed, the payload will attempt to create persistence on the machine and setup a working directory, it then will then initiate the connection to the client.
