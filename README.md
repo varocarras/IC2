@@ -7,6 +7,8 @@
 
 ## Functionality
  - Once executed, the payload will attempt to create persistence on the machine and setup a working directory, it then will then initiate the connection to the client.
+- The Implants life cycle is described below:
+![lifecycle](https://github.com/varocarras/IC2/blob/main/Implant/Implant%20Cycle.png)
 
  - The implant includes the following functionality:
     | System Info
@@ -23,6 +25,10 @@
     | Host scripts in base64 string
 
 ## User Interface
+### Current
+![current](https://github.com/varocarras/IC2/blob/main/C2-Client/Current%20GUI.png)
+### Upcoming
+![upcoming](https://github.com/varocarras/IC2/blob/main/C2-Client/New%20GUI.png)
 ## Sources
  - Chromium-Stealer - [SaulBerrenson/BrowserStealer](https://github.com/SaulBerrenson/BrowserStealer?ref=bestofcpp.com)
 
