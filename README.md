@@ -1,29 +1,30 @@
 # IC2 - P2P RTC Penetration Testing Framework
 
 ## Introduction
+ - This penetration testing framework was developed to help launch an attack, both anonymously and efficiently, without the need of deploying a permanent C2.
  - This framework provides the ability to create a unique payload that communicates to the client directly through RTC.
+ - When the client is out-of-reach, the P2P Network allows the Implant to communicate with others to self-update and share un-transferred useful data.
  - The client is a website that runs on localhost, once connected to it, it will start communicating with implants.
- - Since the communication protocol is RTC, the Client/C2 can be deployed on any public network without the need to port forward.
- - While the Client/C2 is down, the Implants will communicate with each other to exchange their data and get their assigned tasks.
+ - Since the communication protocol is RTC, the Client can be deployed on any public network without the need to port forward, making it ideal to run the Client on public networks.
 
 ## Functionality
- - Once executed, the payload will attempt to create persistence on the machine and setup a working directory, it then will then initiate the connection to the client.
+ - Once executed, the payload will attempt to create persistence on the machine and setup a working directory, it then will then attempt to initiate the connection to the client.
 - The Implants life cycle is described below:
 ![lifecycle](https://github.com/varocarras/IC2/blob/main/Implant/Implant%20Cycle.png)
 
  - The implant includes the following functionality:
-    | System Info
-    | Command shell
-    | Steal credentials
-    | Steal data
-    | Drop .exe (base64 strings)
-    | Display video
-    | Popup message
+    - System Info
+    - Command shell
+    - Steal credentials
+    - Steal data
+    - Drop .exe (base64 strings)
+    - Display video
+    - Popup message
 
 - The Client/C2 includes the following functionality:
-    | Friendly GUI 
-    | Individual implant control panel
-    | Host scripts in base64 string
+    - Friendly GUI 
+    - Individual implant control panel
+    - Host scripts in base64 string
 
 ## User Interface
 ### Current
