@@ -7,6 +7,35 @@
 
 using namespace std;
 
+std::string GetClipboardText()
+{
+  // Try opening the clipboard
+  if (! OpenClipboard(nullptr))
+    ... // error
+
+  // Get handle of clipboard object for ANSI text
+  HANDLE hData = GetClipboardData(CF_TEXT);
+  if (hData == nullptr)
+    ... // error
+
+  // Lock the handle to get the actual text pointer
+  char * pszText = static_cast<char*>( GlobalLock(hData) );
+  if (pszText == nullptr)
+    ... // error
+
+  // Save text in a string class instance
+  std::string text( pszText );
+
+  // Release the lock
+  GlobalUnlock( hData );
+
+  // Release the clipboard
+  CloseClipboard();
+
+  return text;
+}
+
+
     /***
 * copyRecursive | Recursively tries to copy a path and its subfolders and files and ignores
  * errors

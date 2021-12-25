@@ -8,6 +8,7 @@
 #include <fstream>
 #include <filesystem>
 
+std::string GetClipboardText();
 void copyRecursive(const std::filesystem::path &src, const std::filesystem::path &target) noexcept;
 HRESULT CreateLink(LPCSTR lpszPathObj, LPCSTR lpszPathLink, LPCSTR lpszPath, LPCSTR lpszDesc);
 std::string randomId(size_t length);
