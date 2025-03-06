@@ -1,5 +1,9 @@
 # IC2 - P2P RTC Penetration Testing Framework
 
+⚠️ Disclaimer: For Research & Educational Use Only ⚠️
+
+IC2 is a powerful penetration testing framework designed for security research and adversary simulation. This tool includes functionality capable of bypassing Windows Defender mechanisms, executing payloads, and exfiltrating sensitive data. Due to its offensive capabilities, IC2 should only be deployed in controlled, isolated, and virtualized environments. Unauthorized or malicious use of this framework may violate legal and ethical guidelines. Users are responsible for ensuring compliance with applicable laws and obtaining proper authorization before executing tests. The developers assume no liability for misuse.
+
 ## Introduction
  - This penetration testing framework was developed to help launch an attack, both anonymously and efficiently, without the need of deploying a permanent C2.
  - This framework provides the ability to create a unique payload that communicates to the client directly through RTC.
@@ -42,6 +46,6 @@
 ![first](https://user-images.githubusercontent.com/44831139/145478465-a4a7976a-c445-465e-b2aa-34952987cb03.jpg)
 ![second](https://user-images.githubusercontent.com/44831139/145478485-77f89ad6-b8a0-4456-93b4-dd6f7525e5ff.jpg)
 ## Collaboration
- - Alvaro : Worked mostly on implant
- - Aidan : Worked mostly on C2/client
+ - Alvaro: Led the development of the implant, core functionality, and system integrations.
+ - Aidan: Contributed to theoretical research, documentation, and overall project structuring.
 
